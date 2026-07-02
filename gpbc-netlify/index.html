@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPBC — Gestion Club</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ============================================================
+   GPBC — Rouge #CC0000 · Jaune #FFD700 · Noir #111
+   ============================================================ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --r:#CC0000;--j:#FFD700;--n:#111111;
+  --bg:#0D0D0D;--bg2:#1A1A1A;--bg3:#222;
+  --brd:#2A2A2A;--brd2:#333;
+  --txt:#F0F0F0;--txt2:#999;--txt3:#555;
+  --green:#4CAF50;--red:#FF6666;--blue:#6699FF;--purple:#CC88FF;
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:13px;line-height:1.5;min-height:100vh}
+
+/* LOGIN */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1A0000 0%,#0D0D0D 70%);padding:20px}
+.login-box{background:var(--bg2);border:.5px solid var(--brd2);border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-logo{font-size:52px;margin-bottom:12px}
+.login-title{font-size:28px;font-weight:800;color:var(--j);letter-spacing:-1px}
+.login-sub{font-size:12px;color:var(--txt2);margin-top:4px}
+.login-sub2{font-size:11px;color:var(--r);margin-top:4px;margin-bottom:28px}
+.login-form{text-align:left}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:10px;font-weight:700;color:var(--txt2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.fg input{width:100%;padding:10px 12px;border:.5px solid var(--brd2);border-radius:8px;font-size:13px;background:#111;color:var(--txt);font-family:inherit}
+.fg input:focus{outline:none;border-color:var(--r)}
+.login-err{background:#2A0A0A;border:.5px solid var(--r);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--red);margin-bottom:12px}
+.btn-login{width:100%;padding:12px;background:var(--r);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:6px}
+.btn-login:hover{background:#AA0000}
+.btn-login:disabled{opacity:.5;cursor:not-allowed}
+
+/* APP */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.header{background:#0A0A0A;border-bottom:2px solid var(--r);padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:54px;flex-shrink:0;position:sticky;top:0;z-index:100}
+.hlogo{width:36px;height:36px;border-radius:6px;background:linear-gradient(135deg,var(--r),var(--j));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.htitle{font-size:15px;font-weight:800;color:var(--j);letter-spacing:-.3px}
+.hsub{font-size:10px;color:rgba(255,255,255,.4)}
+.hbadge{background:var(--r);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.5px;text-transform:uppercase}
+.hright{display:flex;align-items:center;gap:10px}
+.btn-logout{padding:5px 10px;background:#222;color:var(--txt2);border:.5px solid var(--brd2);border-radius:5px;font-size:10px;cursor:pointer;font-family:inherit}
+.btn-logout:hover{background:#2A0A0A;color:var(--red)}
+
+/* NAV */
+.main-nav{background:#111;border-bottom:1px solid var(--brd);display:flex;overflow-x:auto;flex-shrink:0}
+.main-nav::-webkit-scrollbar{height:0}
+.nav-btn{padding:0 15px;height:42px;font-size:11px;font-weight:600;color:rgba(255,255,255,.35);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;display:flex;align-items:center;gap:6px;font-family:inherit;transition:all .15s}
+.nav-btn:hover{color:rgba(255,255,255,.7)}
+.nav-btn.active{color:var(--j);border-bottom-color:var(--j)}
+
+/* PAGE */
+.page{padding:14px;max-width:960px;margin:0 auto;width:100%}
+
+/* CARD */
+.card{background:var(--bg2);border:.5px solid var(--brd);border-radius:10px;padding:14px;margin-bottom:12px}
+.card-title{font-size:10px;font-weight:700;color:var(--r);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+
+/* KPIs */
+.kpis{display:grid;gap:8px;margin-bottom:14px}
+.k2{grid-template-columns:1fr 1fr}
+.k3{grid-template-columns:1fr 1fr 1fr}
+.k4{grid-template-columns:repeat(4,1fr)}
+.k5{grid-template-columns:repeat(5,1fr)}
+.kpi{background:#111;border:.5px solid var(--brd);border-radius:9px;padding:11px 8px;text-align:center}
+.kpi-val{font-size:18px;font-weight:800;line-height:1.1;margin-bottom:3px}
+.kpi-label{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.4px}
+.kpi.hl{border-color:var(--r);background:#1A0000}
+.kpi.gold{border-color:var(--j);background:#1A1400}
+
+/* FORMS */
+.row{display:grid;gap:8px;margin-bottom:8px}
+.r2{grid-template-columns:1fr 1fr}
+.r3{grid-template-columns:1fr 1fr 1fr}
+.r4{grid-template-columns:repeat(4,1fr)}
+label{display:block;font-size:10px;font-weight:600;color:var(--txt2);margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px}
+input,select,textarea{width:100%;padding:8px 10px;border:.5px solid var(--brd2);border-radius:7px;font-size:12px;background:#111;color:var(--txt);font-family:inherit;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--r)}
+textarea{resize:vertical;min-height:60px}
+
+/* BOUTONS */
+.btn{padding:8px 14px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-r{background:var(--r);color:#fff}.btn-r:hover{background:#AA0000}
+.btn-j{background:var(--j);color:var(--n)}.btn-j:hover{background:#E5C200}
+.btn-g{background:#222;color:var(--txt2);border:.5px solid var(--brd2)}.btn-g:hover{background:var(--bg3)}
+.btn-full{width:100%;justify-content:center}
+.btn-sm{padding:5px 9px;font-size:10px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+/* TYPE TOGGLE */
+.type-toggle{display:grid;border:.5px solid var(--brd2);border-radius:7px;overflow:hidden}
+.t-btn{padding:8px 4px;text-align:center;font-size:11px;font-weight:700;cursor:pointer;border:none;font-family:inherit;color:var(--txt3);background:#111;transition:all .15s}
+.t-rec{background:#0A2A0A;color:var(--green)}
+.t-dep{background:#2A0A0A;color:var(--red)}
+.t-lic{background:#0A0A2A;color:var(--blue)}
+.t-com{background:#2A1A00;color:var(--j)}
+
+/* TABLE */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:7px 9px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--txt3);background:#111;border-bottom:.5px solid var(--brd)}
+td{padding:8px 9px;border-bottom:.5px solid var(--brd);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#1E1E1E}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700;white-space:nowrap}
+.b-g{background:#0A2A0A;color:var(--green);border:.5px solid var(--green)}
+.b-r{background:#2A0A0A;color:var(--red);border:.5px solid var(--r)}
+.b-a{background:#2A1A00;color:var(--j);border:.5px solid var(--j)}
+.b-b{background:#0A0A2A;color:var(--blue);border:.5px solid #3366CC}
+.b-p{background:#1A0A2A;color:var(--purple);border:.5px solid #8844CC}
+.b-x{background:#1A1A1A;color:#888;border:.5px solid #444}
+
+/* BOXES */
+.info-box{background:#0A0A1A;border:.5px solid #3366CC;border-radius:7px;padding:9px 12px;margin-bottom:10px;font-size:11px;line-height:1.7;color:#8899CC}
+.warn-box{background:#1A1000;border:.5px solid var(--j);border-radius:7px;padding:9px 12px;margin-bottom:10px;font-size:11px;line-height:1.7;color:#CCAA44}
+.ok-box{background:#0A1A0A;border:.5px solid var(--green);border-radius:7px;padding:9px 12px;margin-bottom:10px;font-size:11px;line-height:1.7;color:var(--green)}
+.ia-box{background:#0A0A1A;border:.5px solid #3366CC;border-radius:8px;padding:11px;margin-top:10px;font-size:12px;line-height:1.7}
+.ia-label{font-size:9px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+
+/* CHAT */
+.chat-wrap{background:#0D0D0D;border:.5px solid var(--brd);border-radius:10px;overflow:hidden}
+.chat-msgs{padding:14px;min-height:180px;max-height:360px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.msg{padding:10px 13px;border-radius:10px;font-size:12px;line-height:1.7;max-width:85%;white-space:pre-wrap}
+.msg-bot{background:var(--bg2);align-self:flex-start;border-bottom-left-radius:3px}
+.msg-user{background:var(--r);color:#fff;align-self:flex-end;border-bottom-right-radius:3px}
+.chat-in-row{display:flex;gap:8px;padding:10px;border-top:.5px solid var(--brd)}
+.chat-in{flex:1;padding:8px 11px;border:.5px solid var(--brd2);border-radius:7px;font-size:12px;background:#111;color:var(--txt);font-family:inherit}
+
+/* MISC */
+.sep{height:.5px;background:var(--brd);margin:12px 0}
+.sec-title{font-size:10px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;padding-bottom:5px;border-bottom:.5px solid var(--brd)}
+.empty{padding:32px;text-align:center;color:var(--txt3);font-size:12px}
+.hidden{display:none!important}
+.text-g{color:var(--green)}.text-r{color:var(--red)}.text-j{color:var(--j)}.text-b{color:var(--blue)}
+.typing{display:inline-block;width:5px;height:5px;background:var(--blue);border-radius:50%;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.auto-link{display:inline-flex;align-items:center;gap:4px;font-size:9px;color:var(--j);font-weight:600;background:#1A1400;border:.5px solid var(--j);padding:1px 6px;border-radius:20px}
+
+/* DASHBOARD */
+.dash-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.dash-mod{background:#111;border:.5px solid var(--brd);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;text-align:center}
+.dash-mod:hover{border-color:var(--r);background:#1A0000;transform:translateY(-2px)}
+.dash-mod-icon{font-size:26px;margin-bottom:6px}
+.dash-mod-name{font-size:12px;font-weight:700;margin-bottom:2px}
+.dash-mod-desc{font-size:10px;color:var(--txt3)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+
+/* LOADING */
+.loading-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);flex-direction:column;gap:12px}
+.loading-spinner{width:40px;height:40px;border:3px solid var(--brd2);border-top-color:var(--r);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:640px){
+  .k5{grid-template-columns:repeat(3,1fr)}
+  .k4{grid-template-columns:repeat(2,1fr)}
+  .r3,.r4{grid-template-columns:1fr 1fr}
+  .dash-grid{grid-template-columns:repeat(2,1fr)}
+  .page{padding:10px}
+}
+</style>
+</head>
+<body>
+
+<!-- CONFIGURATION — REMPLACE ICI TES CLÉS -->
+<script>
+const SUPABASE_URL = https://ofuvlxyctdjbqxixwetx.supabase.co';
+const SUPABASE_KEY = sb_publishable_k6xnXMzLrvfarMnv5K5mnQ_m2Z2Ldmi';
+const ANTHROPIC_KEY = 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';
+</script>
+
+<!-- CHARGEMENT -->
+<div id="loading" class="loading-screen">
+  <div style="font-size:48px">🦅</div>
+  <div class="loading-spinner"></div>
+  <div style="color:var(--j);font-weight:700">GPBC — Chargement...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-screen" class="login-screen hidden">
+  <div class="login-box">
+    <div class="login-logo">🦅</div>
+    <h1 class="login-title">GPBC</h1>
+    <p class="login-sub">Graveson Provence Basket Club</p>
+    <p class="login-sub2">Club 100% féminin · Saison 2026-2027</p>
+    <div class="login-form">
+      <div class="fg"><label>Email</label><input type="email" id="l-email" placeholder="votre@email.com" autocomplete="email"></div>
+      <div class="fg"><label>Mot de passe</label><input type="password" id="l-pass" placeholder="••••••••"></div>
+      <div id="l-err" class="login-err hidden"></div>
+      <button class="btn-login" id="btn-login" onclick="doLogin()">Se connecter</button>
+    </div>
+    <p style="margin-top:16px;font-size:10px;color:var(--txt3)">Première connexion : utilisez les identifiants transmis par Olivier</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="app hidden">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="hlogo">🦅</div>
+      <div><div class="htitle">GPBC</div><div class="hsub" id="h-sub">Chargement...</div></div>
+    </div>
+    <div class="hright">
+      <span class="hbadge" id="h-role">—</span>
+      <span style="font-size:10px;color:var(--j);font-weight:600">2026-2027</span>
+      <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
+    </div>
+  </div>
+  <nav class="main-nav" id="main-nav"></nav>
+  <main id="main-content" style="flex:1;overflow-y:auto"></main>
+</div>
+
+<script>
+// ============================================================
+// INITIALISATION SUPABASE
+// ============================================================
+const { createClient } = supabase;
+const DB = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================================
+// ÉTAT GLOBAL
+// ============================================================
+let STATE = {
+  user: null,
+  role: null,
+  module: 'dashboard',
+};
+
+const TARIFS = {
+  U5:{prix:110,comite:51},U7:{prix:110,comite:51},U9:{prix:110,comite:51},
+  U11:{prix:150,comite:71},U13:{prix:150,comite:71},U15:{prix:170,comite:71},
+  U18:{prix:170,comite:71},Seniors:{prix:130,comite:95},'Bénévole':{prix:0,comite:42}
+};
+const CAT_ORDER = ['U5','U7','U9','U11','U13','U15','U18','Seniors'];
+
+const PERMISSIONS = {
+  admin:      ['tresorerie','licences','sportif','subventions','sponsoring','reunions','communication','agent','admin','boucle'],
+  tresoriere: ['tresorerie','licences'],
+  secretaire: ['licences','reunions'],
+  comm:       ['communication','sportif'],
+  coach:      ['sportif'],
+};
+
+const MODULES = [
+  {id:'dashboard',icon:'🏠',label:'Accueil',perm:null},
+  {id:'tresorerie',icon:'💰',label:'Trésorerie',perm:'tresorerie'},
+  {id:'licences',icon:'🏀',label:'Licences',perm:'licences'},
+  {id:'sportif',icon:'⚽',label:'Sportif',perm:'sportif'},
+  {id:'subventions',icon:'📄',label:'Subventions',perm:'subventions'},
+  {id:'sponsoring',icon:'🤝',label:'Sponsors',perm:'sponsoring'},
+  {id:'reunions',icon:'📅',label:'Réunions',perm:'reunions'},
+  {id:'communication',icon:'📱',label:'Comm.',perm:'communication'},
+  {id:'agent',icon:'🤖',label:'Agent IA',perm:'agent'},
+  {id:'admin',icon:'⚙️',label:'Admin',perm:'admin'},
+  {id:'boucle',icon:'🔄',label:'Boucle',perm:'boucle'},
+];
+
+// ============================================================
+// UTILITAIRES
+// ============================================================
+const fmt = n => typeof n==='number'?n.toLocaleString('fr-FR',{minimumFractionDigits:2}):'0,00';
+const today = () => new Date().toISOString().split('T')[0];
+const fmtD = d => d?new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'';
+const fmtDL = d => d?new Date(d+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}):'';
+const hasPerm = p => !p || (PERMISSIONS[STATE.role]||[]).includes(p) || STATE.role==='admin';
+
+function toast(msg, ok=true){
+  const el=document.createElement('div');
+  el.style.cssText=`position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 18px;border-radius:8px;font-size:12px;font-weight:700;background:${ok?'#0A2A0A':'#2A0A0A'};color:${ok?'#4CAF50':'#FF6666'};border:.5px solid ${ok?'#4CAF50':'#CC0000'};box-shadow:0 4px 20px rgba(0,0,0,.4)`;
+  el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);toast('✅ Copié !');}
+  catch{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);toast('✅ Copié !');}
+}
+
+function getTarif(cat,surcl=false,fratrie=false){
+  let c=cat;
+  if(surcl){const i=CAT_ORDER.indexOf(cat);if(i>=0&&i<CAT_ORDER.length-1)c=CAT_ORDER[i+1];}
+  const t=TARIFS[c]||{prix:0,comite:0};
+  let prix=t.prix;
+  if(fratrie&&prix>0)prix-=10;
+  return{prix,comite:t.comite,net:prix-t.comite,catEff:c};
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+async function checkAuth(){
+  try{
+    // Vérifier session Supabase
+    const {data:{session}}=await DB.auth.getSession();
+    if(session){
+      // Récupérer le profil utilisateur
+      const {data:user}=await DB.from('utilisateurs').select('*').eq('email',session.user.email).single();
+      if(user&&user.actif){
+        STATE.user=user;
+        STATE.role=user.role;
+        showApp();
+        return;
+      }
+    }
+  }catch(e){}
+  showLogin();
+}
+
+async function doLogin(){
+  const email=document.getElementById('l-email').value.trim();
+  const pass=document.getElementById('l-pass').value;
+  const btn=document.getElementById('btn-login');
+  const err=document.getElementById('l-err');
+  if(!email||!pass){showErr('Email et mot de passe requis');return;}
+  btn.disabled=true;btn.textContent='Connexion...';err.classList.add('hidden');
+  try{
+    // Chercher l'utilisateur dans notre table
+    const {data:users,error}=await DB.from('utilisateurs').select('*').eq('email',email).eq('actif',true);
+    if(error||!users||users.length===0){showErr('Email ou mot de passe incorrect');btn.disabled=false;btn.textContent='Se connecter';return;}
+    const user=users[0];
+    // Vérification simple du mot de passe (hash stocké)
+    // Pour la prod on utilise Supabase Auth — ici on compare le hash bcrypt côté client
+    const ok = await verifyPassword(pass, user.password_hash);
+    if(!ok){showErr('Email ou mot de passe incorrect');btn.disabled=false;btn.textContent='Se connecter';return;}
+    STATE.user=user;STATE.role=user.role;
+    // Mettre à jour last_login
+    await DB.from('utilisateurs').update({last_login:new Date().toISOString()}).eq('id',user.id);
+    showApp();
+  }catch(e){showErr('Erreur de connexion. Vérifiez votre connexion internet.');console.error(e);}
+  btn.disabled=false;btn.textContent='Se connecter';
+}
+
+// Vérification mot de passe simple (comparaison texte pour V1)
+async function verifyPassword(pass, hash){
+  // Version 1 : comparaison directe (les mots de passe sont stockés en clair pour V1)
+  // Version 2 : on utilisera bcrypt via Supabase Auth
+  return pass===hash;
+}
+
+function showErr(msg){const e=document.getElementById('l-err');e.textContent=msg;e.classList.remove('hidden');}
+
+async function doLogout(){
+  STATE.user=null;STATE.role=null;
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+function showLogin(){
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('app').classList.add('hidden');
+  // Écouter Enter
+  document.getElementById('l-pass').onkeydown=e=>{if(e.key==='Enter')doLogin();};
+}
+
+function showApp(){
+  document.getElementById('loading').classList.add('hidden');
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  document.getElementById('h-sub').textContent=`${STATE.user.prenom} ${STATE.user.nom} · ${STATE.role}`;
+  document.getElementById('h-role').textContent=STATE.role.toUpperCase();
+  buildNav();
+  navigate('dashboard');
+}
+
+function buildNav(){
+  const nav=document.getElementById('main-nav');
+  nav.innerHTML='';
+  MODULES.filter(m=>hasPerm(m.perm)).forEach(m=>{
+    const btn=document.createElement('button');
+    btn.className='nav-btn';btn.dataset.m=m.id;
+    btn.innerHTML=`${m.icon} ${m.label}`;
+    btn.onclick=()=>navigate(m.id);
+    nav.appendChild(btn);
+  });
+}
+
+function navigate(id){
+  STATE.module=id;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.m===id));
+  const c=document.getElementById('main-content');c.innerHTML='';
+  const handlers={
+    dashboard:renderDashboard,tresorerie:renderTresorerie,licences:renderLicences,
+    sportif:renderSportif,subventions:renderSubventions,sponsoring:renderSponsoring,
+    reunions:renderReunions,communication:renderCommunication,agent:renderAgent,
+    admin:renderAdmin,boucle:renderBoucle
+  };
+  if(handlers[id])handlers[id](c);
+}
+
+// ============================================================
+// MODULE DASHBOARD
+// ============================================================
+async function renderDashboard(c){
+  c.innerHTML=`<div class="page"><div class="card"><div class="card-title">🦅 Tableau de bord GPBC</div>
+  <div class="info-box"><strong style="color:var(--j)">GPBC — Saison 2026-2027</strong> · Club 100% féminin · Graveson (13) · Président : Olivier FAURE</div>
+  <div id="dash-kpis"><div class="kpis k4">${['','','',''].map(()=>`<div class="kpi"><div class="kpi-val" style="color:#333">—</div><div class="kpi-label">Chargement...</div></div>`).join('')}</div></div>
+  <div class="sec-title">Accès rapide</div>
+  <div class="dash-grid" id="dash-grid"></div>
+  <div class="sec-title">⚡ Liaisons automatiques actives</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px">
+    <span class="auto-link">⚡ Licence → Trésorerie</span>
+    <span class="auto-link">⚡ Sponsor → Trésorerie</span>
+    <span class="auto-link">⚡ Don → Reçu fiscal</span>
+    <span class="auto-link">⚡ Résultat → Post auto</span>
+    <span class="auto-link">⚡ HelloAsso → Licences</span>
+  </div>
+  </div>
+  <div class="card"><div class="card-title">📅 Prochains matchs</div><div id="dash-matchs"><div class="empty">Chargement...</div></div></div>
+  </div>`;
+
+  // Charger les données
+  const [kpisR,matchsR,licR]=await Promise.all([
+    DB.rpc('get_kpis').catch(()=>({data:null})),
+    DB.from('matchs').select('*').gte('date',today()).order('date').limit(5),
+    DB.from('licences').select('id,statut,saison').eq('saison','2026-2027'),
+  ]);
+
+  // KPIs manuels
+  const licences=licR.data||[];
+  const {data:ecr}=await DB.from('ecritures').select('type,montant,en_attente,est_comite');
+  const rec=(ecr||[]).filter(e=>e.type==='recette'&&!e.en_attente).reduce((s,e)=>s+e.montant,0);
+  const dep=(ecr||[]).filter(e=>e.type==='depense'&&!e.est_comite).reduce((s,e)=>s+e.montant,0);
+  const {data:vers}=await DB.from('versements_comite').select('montant');
+  const verse=(vers||[]).reduce((s,v)=>s+v.montant,0);
+  const solde=rec-dep-verse;
+
+  document.getElementById('dash-kpis').innerHTML=`<div class="kpis k4">
+    ${kpi('Solde tréso',(solde>=0?'+':'')+fmt(solde)+' €',solde>=0?'var(--green)':'var(--red)','hl')}
+    ${kpi('Licenciées',licences.length,'var(--blue)','')}
+    ${kpi('Validées',licences.filter(l=>l.statut==='VALIDÉE').length,'var(--green)','')}
+    ${kpi('Impayées',licences.filter(l=>l.statut==='IMPAYÉE').length,licences.filter(l=>l.statut==='IMPAYÉE').length>0?'var(--red)':'var(--green)','')}
+  </div>`;
+
+  // Modules grid
+  const grid=document.getElementById('dash-grid');
+  grid.innerHTML=MODULES.filter(m=>m.id!=='dashboard'&&hasPerm(m.perm)).map(m=>`
+    <div class="dash-mod" onclick="navigate('${m.id}')">
+      <div class="dash-mod-icon">${m.icon}</div>
+      <div class="dash-mod-name">${m.label}</div>
+      <div class="dash-mod-desc">${modDesc(m.id,licences,solde)}</div>
+    </div>`).join('');
+
+  // Matchs
+  const matchs=matchsR.data||[];
+  document.getElementById('dash-matchs').innerHTML=matchs.length?`
+    <div class="table-wrap"><table><thead><tr><th>Date</th><th>Cat.</th><th>Adversaire</th><th>Lieu</th></tr></thead><tbody>
+    ${matchs.map(m=>`<tr><td style="font-weight:700">${fmtD(m.date)}</td><td><span class="badge b-b">${m.categorie}</span></td><td><strong>${m.adversaire}</strong></td><td><span class="badge ${m.lieu==='domicile'?'b-a':'b-x'}">${m.lieu==='domicile'?'🏠':'✈️'}</span></td></tr>`).join('')}
+    </tbody></table></div>`:'<div class="empty">Aucun match planifié. Ajoutez le planning dans le module Sportif.</div>';
+}
+
+function kpi(label,val,color,cls){return`<div class="kpi ${cls}"><div class="kpi-val" style="color:${color}">${val}</div><div class="kpi-label">${label}</div></div>`;}
+function modDesc(id,lics,solde){
+  const d={tresorerie:`Solde ${fmt(solde)} €`,licences:`${lics.length} licenciées`,sportif:'Planning · Résultats',subventions:'5 dossiers · 18 000 €',sponsoring:'Partenaires · Dons',reunions:'ODJ · PV · Convocations',communication:'Affiches · Posts · NL',agent:'Questions libres IA',admin:'Utilisateurs · Logs',boucle:'Saison N → N+1'};
+  return d[id]||'';
+}
+
+// ============================================================
+// MODULE TRÉSORERIE
+// ============================================================
+async function renderTresorerie(c){
+  c.innerHTML=`<div class="page">
+  <div id="t-kpis" class="kpis k5">${Array(5).fill('<div class="kpi"><div class="kpi-val" style="color:#333">—</div><div class="kpi-label">...</div></div>').join('')}</div>
+  <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+    <button class="btn btn-sm btn-r" onclick="tSubTab('saisie')">✏️ Saisie</button>
+    <button class="btn btn-sm btn-g" onclick="tSubTab('tableau')">📋 Tableau</button>
+    <button class="btn btn-sm btn-g" onclick="tSubTab('bilan')">📊 Bilan</button>
+  </div>
+  <div id="t-saisie">
+    <div class="card"><div class="card-title">✏️ Nouvelle écriture</div>
+    <div style="margin-bottom:10px"><div class="type-toggle" style="grid-template-columns:1fr 1fr 1fr 1fr" id="type-toggle">
+      <button class="t-btn t-rec" onclick="setType('recette',this)">+ Recette</button>
+      <button class="t-btn" onclick="setType('depense',this)">− Dépense</button>
+      <button class="t-btn" onclick="setType('licence',this)">🏀 Licence</button>
+      <button class="t-btn" onclick="setType('comite',this)">🏦 Comité</button>
+    </div></div>
+    <div id="form-std">
+      <div class="row r2"><div><label>Date</label><input type="date" id="e-date" value="${today()}"></div><div><label>Montant (€)</label><input type="number" id="e-montant" placeholder="0.00" step="0.01"></div></div>
+      <div class="row r2">
+        <div><label>Catégorie</label><select id="e-cat"><option value="">-- Choisir --</option></select></div>
+        <div><label>Tiers</label><input id="e-tiers" placeholder="Mairie, fournisseur..."></div>
+      </div>
+      <div class="row r2"><div><label>Mode</label><select id="e-mode"><option>Virement</option><option>Chèque</option><option>Espèces</option><option>CB</option></select></div><div><label>Description</label><input id="e-desc" placeholder="Précisions..."></div></div>
+    </div>
+    <div id="form-lic" class="hidden">
+      <div class="sec-title">Joueuse</div>
+      <div class="row r3"><div><label>Prénom</label><input id="l-prenom"></div><div><label>Nom</label><input id="l-nom"></div><div><label>Naissance</label><input type="date" id="l-ddn"></div></div>
+      <div class="row r2"><div><label>Email</label><input type="email" id="l-email2"></div><div><label>Téléphone</label><input id="l-tel"></div></div>
+      <div class="sec-title">Catégorie</div>
+      <div class="row r3">
+        <div><label>Catégorie</label><select id="l-cat" onchange="updateTarif()">${Object.keys(TARIFS).map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div><label>Surclassement</label><select id="l-surcl" onchange="updateTarif()"><option value="non">Non</option><option value="oui">Oui</option></select></div>
+        <div><label>Fratrie</label><select id="l-fratrie" onchange="updateTarif()"><option value="non">Non</option><option value="oui">Oui (−10€)</option></select></div>
+      </div>
+      <div id="tarif-box" class="ok-box" style="margin-bottom:8px">Sélectionnez une catégorie</div>
+      <div class="sec-title">Paiement</div>
+      <div class="row r3">
+        <div><label>Chèque</label><input type="number" id="l-ch" value="0" oninput="updateTarif()"></div>
+        <div><label>Espèces</label><input type="number" id="l-es" value="0" oninput="updateTarif()"></div>
+        <div><label>Virement</label><input type="number" id="l-vi" value="0" oninput="updateTarif()"></div>
+        <div><label>Pass Sport ⏳</label><input type="number" id="l-ps" value="0" oninput="updateTarif()"></div>
+        <div><label>Carte Collég. ⏳</label><input type="number" id="l-cc" value="0" oninput="updateTarif()"></div>
+        <div><label>HelloAsso 💳</label><input type="number" id="l-ha" value="0" oninput="updateTarif()"></div>
+      </div>
+    </div>
+    <div id="form-com" class="hidden">
+      <div class="row r2"><div><label>Date</label><input type="date" id="c-date" value="${today()}"></div><div><label>Montant (€)</label><input type="number" id="c-montant" placeholder="0.00"></div></div>
+      <div class="row r2"><div><label>Destinataire</label><select id="c-dest"><option>Comité 84</option><option>Comité 13</option><option>FFBB / Ligue PACA</option></select></div><div><label>Libellé</label><input id="c-lib" placeholder="ex: T1 2026-2027"></div></div>
+    </div>
+    <div id="t-ia" class="ia-box hidden"><div class="ia-label">🤖 Résultat</div><div id="t-ia-text"></div></div>
+    <button class="btn btn-r btn-full" style="margin-top:10px" id="btn-saisir" onclick="saisirEcriture()">Enregistrer</button>
+    </div>
+  </div>
+  <div id="t-tableau" class="hidden">
+    <div class="card"><div class="card-title">📋 Livre comptable</div><div id="t-table-content"><div class="empty">Chargement...</div></div></div>
+  </div>
+  <div id="t-bilan" class="hidden">
+    <div class="card"><div class="card-title">📊 Compte de résultat</div><div id="t-bilan-content"><div class="empty">Chargement...</div></div></div>
+  </div>
+  </div>`;
+
+  // Charger KPIs
+  await loadKPIs();
+  setType('recette', document.querySelector('.t-rec'));
+  updateCats('recette');
+}
+
+let currentType='recette';
+function setType(t,el){
+  currentType=t;
+  document.querySelectorAll('.t-btn').forEach(b=>{b.className='t-btn';});
+  if(el){const cls={recette:'t-rec',depense:'t-dep',licence:'t-lic',comite:'t-com'};el.classList.add(cls[t]||'');}
+  document.getElementById('form-std').classList.toggle('hidden',t==='licence'||t==='comite');
+  document.getElementById('form-lic').classList.toggle('hidden',t!=='licence');
+  document.getElementById('form-com').classList.toggle('hidden',t!=='comite');
+  if(t!=='licence'&&t!=='comite')updateCats(t);
+}
+
+function updateCats(t){
+  const sel=document.getElementById('e-cat');if(!sel)return;
+  const cats=t==='recette'?['Subvention publique','Don / Sponsor','Adhésion / Licence','Pass Sport','Buvette','Remboursement','Autre recette']:['Arbitrage','Équipement','Événement','Assurance','Frais bancaires','Communication','Autre dépense'];
+  sel.innerHTML='<option value="">-- Choisir --</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function updateTarif(){
+  const cat=document.getElementById('l-cat')?.value;if(!cat)return;
+  const surcl=document.getElementById('l-surcl')?.value==='oui';
+  const fratrie=document.getElementById('l-fratrie')?.value==='oui';
+  const {prix,comite,net}=getTarif(cat,surcl,fratrie);
+  const ch=+document.getElementById('l-ch')?.value||0;
+  const es=+document.getElementById('l-es')?.value||0;
+  const vi=+document.getElementById('l-vi')?.value||0;
+  const ps=+document.getElementById('l-ps')?.value||0;
+  const cc=+document.getElementById('l-cc')?.value||0;
+  const ha=+document.getElementById('l-ha')?.value||0;
+  const total=ch+es+vi+ps+cc+ha;
+  const restant=Math.max(0,prix-total);
+  const box=document.getElementById('tarif-box');if(!box)return;
+  box.innerHTML=`Tarif : <strong>${fmt(prix)} €</strong> · Comité : <strong style="color:var(--j)">${fmt(comite)} €</strong> · Net club : <strong>${fmt(net)} €</strong><br>Perçu : <strong style="color:var(--green)">${fmt(total)} €</strong> · Restant : <strong style="color:${restant>0?'var(--red)':'var(--green)'}">${fmt(restant)} €</strong> <span class="auto-link">⚡ → Trésorerie auto</span>`;
+}
+
+async function saisirEcriture(){
+  const btn=document.getElementById('btn-saisir');
+  btn.disabled=true;btn.textContent='Enregistrement...';
+  try{
+    if(currentType==='licence'){
+      const prenom=document.getElementById('l-prenom').value.trim();
+      const nom=document.getElementById('l-nom').value.trim();
+      const cat=document.getElementById('l-cat').value;
+      if(!prenom||!nom||!cat){toast('Prénom, nom et catégorie requis',false);return;}
+      const surcl=document.getElementById('l-surcl').value==='oui';
+      const fratrie=document.getElementById('l-fratrie').value==='oui';
+      const {prix,comite,net,catEff}=getTarif(cat,surcl,fratrie);
+      const ch=+document.getElementById('l-ch').value||0;
+      const es=+document.getElementById('l-es').value||0;
+      const vi=+document.getElementById('l-vi').value||0;
+      const ps=+document.getElementById('l-ps').value||0;
+      const cc=+document.getElementById('l-cc').value||0;
+      const ha=+document.getElementById('l-ha').value||0;
+      const encaisse=ch+es+vi+ha;
+      const total=encaisse+ps+cc;
+      const restant=Math.max(0,prix-total);
+      const statut=restant===0?'VALIDÉE':total===0?'IMPAYÉE':'PARTIELLE';
+
+      const {error:licErr}=await DB.from('licences').insert({
+        prenom,nom,date_naissance:document.getElementById('l-ddn').value||null,
+        email:document.getElementById('l-email2').value||null,telephone:document.getElementById('l-tel').value||null,
+        categorie:cat,categorie_effective:catEff,surclassement:surcl,fratrie,
+        tarif:prix,part_comite:comite,net_club:net,
+        pmt_cheque:ch,pmt_especes:es,pmt_virement:vi,pmt_pass_sport:ps,pmt_carte_collegiale:cc,pmt_helloasso:ha,
+        total_percu:total,restant_du:restant,statut,source:'Manuel',saison:'2026-2027',
+        consentement_rgpd:true,date_consentement:new Date().toISOString(),created_by:STATE.user.id
+      });
+      if(licErr)throw licErr;
+
+      // Lien auto → trésorerie
+      if(encaisse>0){
+        await DB.from('ecritures').insert({type:'recette',date:today(),montant:encaisse,categorie:'Adhésion / Licence',tiers:`${prenom} ${nom} (${cat})`,mode:'Multi',description:`Licence ${cat} ${statut}`,est_licence:true,created_by:STATE.user.id});
+      }
+      if(ps>0) await DB.from('ecritures').insert({type:'recette',date:today(),montant:ps,categorie:'Pass Sport',tiers:`${prenom} ${nom}`,mode:'Décalé',en_attente:true,est_licence:true,created_by:STATE.user.id,description:''});
+      if(cc>0) await DB.from('ecritures').insert({type:'recette',date:today(),montant:cc,categorie:'Carte Collégiale',tiers:`${prenom} ${nom}`,mode:'Décalé',en_attente:true,est_licence:true,created_by:STATE.user.id,description:''});
+
+      const iaBox=document.getElementById('t-ia');const iaText=document.getElementById('t-ia-text');
+      iaBox.classList.remove('hidden');
+      iaText.textContent=`✅ Licence ${prenom} ${nom} (${cat}) enregistrée. Tarif : ${fmt(prix)} € · Part comité : ${fmt(comite)} € · Statut : ${statut}${restant>0?' · Reste '+fmt(restant)+' €':''}`;
+      toast(`✅ Licence ${prenom} ${nom} enregistrée — ${statut}`);
+      await loadKPIs();
+
+    } else if(currentType==='comite'){
+      const montant=+document.getElementById('c-montant').value;
+      if(!montant){toast('Montant requis',false);return;}
+      const date=document.getElementById('c-date').value;
+      const dest=document.getElementById('c-dest').value;
+      const lib=document.getElementById('c-lib').value;
+      await DB.from('versements_comite').insert({date,montant,destinataire:dest,libelle:lib});
+      await DB.from('ecritures').insert({type:'depense',date,montant,categorie:'Versement comité',tiers:dest,mode:'Virement',description:lib,est_comite:true,created_by:STATE.user.id});
+      toast(`✅ Versement ${fmt(montant)} € → ${dest} enregistré`);
+      await loadKPIs();
+
+    } else {
+      const montant=+document.getElementById('e-montant').value;
+      const tiers=document.getElementById('e-tiers').value.trim();
+      if(!montant||!tiers){toast('Montant et tiers requis',false);return;}
+      await DB.from('ecritures').insert({
+        type:currentType,date:document.getElementById('e-date').value,montant,
+        categorie:document.getElementById('e-cat').value,tiers,
+        mode:document.getElementById('e-mode').value,description:document.getElementById('e-desc').value,
+        en_attente:false,est_comite:false,est_licence:false,created_by:STATE.user.id
+      });
+      toast(`✅ ${currentType==='recette'?'Recette':'Dépense'} de ${fmt(montant)} € enregistrée`);
+      await loadKPIs();
+    }
+  }catch(e){toast('Erreur : '+e.message,false);console.error(e);}
+  btn.disabled=false;btn.textContent='Enregistrer';
+}
+
+async function loadKPIs(){
+  const [ecrR,versR]=await Promise.all([DB.from('ecritures').select('type,montant,en_attente,est_comite'),DB.from('versements_comite').select('montant')]);
+  const ecr=ecrR.data||[];const vers=versR.data||[];
+  const rec=ecr.filter(e=>e.type==='recette'&&!e.en_attente).reduce((s,e)=>s+e.montant,0);
+  const dep=ecr.filter(e=>e.type==='depense'&&!e.est_comite).reduce((s,e)=>s+e.montant,0);
+  const verse=vers.reduce((s,v)=>s+v.montant,0);
+  const {data:lics}=await DB.from('licences').select('part_comite').eq('saison','2026-2027');
+  const totalDu=(lics||[]).reduce((s,l)=>s+l.part_comite,0);
+  const restant=Math.max(0,totalDu-verse);
+  const solde=rec-dep-verse-restant;
+  const el=document.getElementById('t-kpis');if(!el)return;
+  el.innerHTML=`<div class="kpis k5">
+    ${kpi('① Recettes',fmt(rec)+' €','var(--green)','')}
+    ${kpi('② Dép. club',fmt(dep)+' €','var(--red)','')}
+    ${kpi('③ Versé comités',fmt(verse)+' €','var(--j)','')}
+    ${kpi('④ Restant comités',fmt(restant)+' €','var(--purple)','')}
+    ${kpi('⑤ Solde net',(solde>=0?'+':'')+fmt(solde)+' €',solde>=0?'var(--green)':'var(--red)','hl')}
+  </div>`;
+}
+
+function tSubTab(t){
+  ['saisie','tableau','bilan'].forEach(s=>{document.getElementById('t-'+s)?.classList.toggle('hidden',s!==t);});
+  if(t==='tableau')loadTableau();
+  if(t==='bilan')loadBilan();
+}
+
+async function loadTableau(){
+  const {data:ecr}=await DB.from('ecritures').select('*').order('date',{ascending:false});
+  const el=document.getElementById('t-table-content');if(!el)return;
+  if(!ecr||ecr.length===0){el.innerHTML='<div class="empty">Aucune écriture.</div>';return;}
+  el.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Tiers</th><th>Catégorie</th><th>Montant</th></tr></thead><tbody>
+  ${ecr.map(e=>`<tr><td>${fmtD(e.date)}</td>
+  <td><span class="badge ${e.en_attente?'b-a':e.est_comite?'b-p':e.type==='recette'?'b-g':'b-r'}">${e.en_attente?'⏳':e.est_comite?'🏦':e.type==='recette'?'↑':'↓'}</span></td>
+  <td><strong>${e.tiers||'—'}</strong></td>
+  <td style="color:var(--txt3);font-size:10px">${e.categorie||'—'}</td>
+  <td class="${e.type==='recette'?'text-g':'text-r'}" style="font-weight:700">${e.type==='recette'?'+':'-'}${fmt(e.montant)} €</td>
+  </tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+async function loadBilan(){
+  const {data:ecr}=await DB.from('ecritures').select('type,montant,categorie,en_attente,est_comite');
+  const {data:vers}=await DB.from('versements_comite').select('montant');
+  const el=document.getElementById('t-bilan-content');if(!el)return;
+  const produits={};
+  (ecr||[]).filter(e=>e.type==='recette'&&!e.en_attente).forEach(e=>{produits[e.categorie||'Autre']=(produits[e.categorie||'Autre']||0)+e.montant;});
+  const charges={};
+  (ecr||[]).filter(e=>e.type==='depense'&&!e.est_comite).forEach(e=>{charges[e.categorie||'Autre']=(charges[e.categorie||'Autre']||0)+e.montant;});
+  if(vers&&vers.length>0)charges['Versements comités']=(vers||[]).reduce((s,v)=>s+v.montant,0);
+  const totalP=Object.values(produits).reduce((s,v)=>s+v,0);
+  const totalC=Object.values(charges).reduce((s,v)=>s+v,0);
+  const res=totalP-totalC;
+  el.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+  <div><div style="background:#0A2A0A;padding:8px 12px;border-radius:6px 6px 0 0;font-weight:700;font-size:11px;color:var(--green)">PRODUITS</div>
+  ${Object.entries(produits).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 12px;border-bottom:.5px solid var(--brd);font-size:11px"><span style="color:#888">${k}</span><span class="text-g">+${fmt(v)} €</span></div>`).join('')}
+  <div style="display:flex;justify-content:space-between;padding:8px 12px;background:#111;font-weight:700"><span>TOTAL</span><span class="text-g">+${fmt(totalP)} €</span></div></div>
+  <div><div style="background:#2A0A0A;padding:8px 12px;border-radius:6px 6px 0 0;font-weight:700;font-size:11px;color:var(--red)">CHARGES</div>
+  ${Object.entries(charges).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 12px;border-bottom:.5px solid var(--brd);font-size:11px"><span style="color:#888">${k}</span><span class="text-r">-${fmt(v)} €</span></div>`).join('')}
+  <div style="display:flex;justify-content:space-between;padding:8px 12px;background:#111;font-weight:700"><span>TOTAL</span><span class="text-r">-${fmt(totalC)} €</span></div></div>
+  </div>
+  <div style="background:${res>=0?'#0A2A0A':'#2A0A0A'};border:.5px solid ${res>=0?'var(--green)':'var(--r)'};border-radius:8px;padding:12px;margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+  <span style="font-weight:700">RÉSULTAT DE L'EXERCICE</span>
+  <span style="font-weight:800;font-size:18px;color:${res>=0?'var(--green)':'var(--red)'}">${res>=0?'+':''}${fmt(res)} €</span></div>`;
+}
+
+// ============================================================
+// MODULE LICENCES
+// ============================================================
+async function renderLicences(c){
+  const {data:lics}=await DB.from('licences').select('*').eq('saison','2026-2027').order('nom');
+  const impayees=(lics||[]).filter(l=>l.restant_du>0);
+  const total=(lics||[]).reduce((s,l)=>s+(l.total_percu||0),0);
+
+  c.innerHTML=`<div class="page">
+  <div class="kpis k4">
+    ${kpi('Total',lics?.length||0,'var(--blue)','')}
+    ${kpi('Validées',(lics||[]).filter(l=>l.statut==='VALIDÉE').length,'var(--green)','')}
+    ${kpi('Impayées/Partielles',impayees.length,impayees.length>0?'var(--red)':'var(--green)',impayees.length>0?'hl':'')}
+    ${kpi('Recettes licences',fmt(total)+' €','var(--j)','gold')}
+  </div>
+  ${impayees.length>0?`<div class="warn-box">⚠️ <strong>${impayees.length} licence(s) avec solde restant :</strong> ${impayees.map(l=>`${l.prenom} ${l.nom} (${fmt(l.restant_du)} €)`).join(' · ')}</div>`:''}
+  <div class="card"><div class="card-title">🏀 Licenciées saison 2026-2027</div>
+  <div class="row r2" style="margin-bottom:10px">
+    <input id="lic-search" placeholder="Rechercher nom, prénom..." oninput="filterLics()" style="padding:7px 10px">
+    <select id="lic-cat" onchange="filterLics()"><option value="">Toutes catégories</option>${[...new Set((lics||[]).map(l=>l.categorie))].map(c=>`<option>${c}</option>`).join('')}</select>
+  </div>
+  <div id="lics-table">${renderLicsTable(lics||[])}</div>
+  </div>
+  <div class="card"><div class="card-title">📥 Import CSV HelloAsso</div>
+  <div class="info-box">Exportez vos paiements depuis HelloAsso (format CSV) et importez-les ici. Les licences et écritures comptables seront créées automatiquement. <span class="auto-link">⚡ HelloAsso → Licences + Trésorerie</span></div>
+  <input type="file" id="csv-input" accept=".csv" onchange="importCSV(this)" style="margin-bottom:8px">
+  <div id="csv-result"></div>
+  </div>
+  </div>`;
+  window._lics=lics||[];
+}
+
+function renderLicsTable(lics){
+  if(!lics.length)return'<div class="empty">Aucune licence. Ajoutez des licences dans le module Trésorerie.</div>';
+  return`<div class="table-wrap"><table><thead><tr><th>Nom</th><th>Catégorie</th><th>Contact</th><th>Tarif</th><th>Perçu</th><th>Restant</th><th>Statut</th><th>Source</th></tr></thead><tbody>
+  ${lics.map(l=>`<tr>
+  <td><strong>${l.nom} ${l.prenom}</strong>${l.date_naissance?`<div style="font-size:9px;color:var(--txt3)">${new Date(l.date_naissance+'T12:00').toLocaleDateString('fr-FR')}</div>`:''}</td>
+  <td><span class="badge b-b">${l.categorie}</span>${l.surclassement?'<span style="font-size:9px;color:var(--j)"> ↑</span>':''}</td>
+  <td style="font-size:10px;color:var(--txt2)">${l.email||'—'}${l.telephone?'<br>'+l.telephone:''}</td>
+  <td style="font-weight:700">${fmt(l.tarif)} €</td>
+  <td class="text-g">${fmt(l.total_percu)} €</td>
+  <td>${l.restant_du>0?`<span class="text-r">${fmt(l.restant_du)} €</span>`:'<span class="text-g">✓</span>'}</td>
+  <td><span class="badge ${l.statut==='VALIDÉE'?'b-g':l.statut==='PARTIELLE'?'b-a':'b-r'}">${l.statut}</span></td>
+  <td style="font-size:9px;color:var(--txt3)">${l.source||'Manuel'}</td>
+  </tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function filterLics(){
+  const s=(document.getElementById('lic-search')?.value||'').toLowerCase();
+  const cat=document.getElementById('lic-cat')?.value||'';
+  const filtered=(window._lics||[]).filter(l=>{
+    const ms=!s||(l.nom+l.prenom+(l.email||'')).toLowerCase().includes(s);
+    const mc=!cat||l.categorie===cat;
+    return ms&&mc;
+  });
+  const el=document.getElementById('lics-table');if(el)el.innerHTML=renderLicsTable(filtered);
+}
+
+async function importCSV(input){
+  const file=input.files[0];if(!file)return;
+  const text=await file.text();
+  const lines=text.split('\n').filter(l=>l.trim());
+  if(lines.length<2){document.getElementById('csv-result').innerHTML='<div class="warn-box">Fichier vide ou invalide.</div>';return;}
+  const headers=lines[0].split(';').map(h=>h.trim().replace(/"/g,'').toLowerCase());
+  let imported=0,errors=0;
+  for(let i=1;i<lines.length;i++){
+    const vals=lines[i].split(';').map(v=>v.trim().replace(/"/g,''));
+    const row={};headers.forEach((h,j)=>row[h]=vals[j]||'');
+    try{
+      const prenom=row['prénom']||row['prenom']||row['firstname']||'';
+      const nom=row['nom']||row['lastname']||row['name']||'';
+      const montant=parseFloat((row['montant']||row['amount']||'0').replace(',','.'));
+      const email=row['email']||'';
+      const date=row['date']||today();
+      if(!prenom||!nom||!montant){errors++;continue;}
+      await DB.from('licences').insert({prenom,nom,email,tarif:montant,total_percu:montant,restant_du:0,statut:'VALIDÉE',source:'HelloAsso',categorie:'À définir',saison:'2026-2027',pmt_helloasso:montant,consentement_rgpd:true,date_consentement:new Date().toISOString(),created_by:STATE.user.id});
+      await DB.from('ecritures').insert({type:'recette',date,montant,categorie:'Adhésion / Licence',tiers:`${prenom} ${nom}`,mode:'HelloAsso',description:'Import CSV HelloAsso',est_licence:true,created_by:STATE.user.id});
+      imported++;
+    }catch(e){errors++;}
+  }
+  document.getElementById('csv-result').innerHTML=`<div class="${errors===0?'ok-box':'warn-box'}">✅ ${imported} licence(s) importée(s)${errors>0?' · '+errors+' erreur(s) ignorée(s)':''} <span class="auto-link">⚡ Trésorerie mise à jour</span></div>`;
+  toast(`✅ ${imported} licences importées depuis HelloAsso`);
+}
+
+// ============================================================
+// MODULE SPORTIF
+// ============================================================
+async function renderSportif(c){
+  const {data:matchs}=await DB.from('matchs').select('*').eq('saison','2026-2027').order('date');
+  const avenir=(matchs||[]).filter(m=>m.date>=today()&&!m.resultat).length;
+  const victoires=(matchs||[]).filter(m=>m.resultat==='V').length;
+
+  c.innerHTML=`<div class="page">
+  <div class="kpis k4">
+    ${kpi('Total matchs',(matchs||[]).length,'var(--blue)','')}
+    ${kpi('Domicile 🏠',(matchs||[]).filter(m=>m.lieu==='domicile').length,'var(--j)','')}
+    ${kpi('À venir',avenir,'var(--green)','')}
+    ${kpi('Victoires',victoires,'var(--green)','')}
+  </div>
+  <div class="card"><div class="card-title">➕ Ajouter un match</div>
+  <div class="row r2"><div><label>Date</label><input type="date" id="m-date" value="${today()}"></div><div><label>Heure</label><input type="time" id="m-heure" value="15:00"></div></div>
+  <div class="row r2">
+    <div><label>Catégorie</label><select id="m-cat"><option>U11</option><option>U13</option><option selected>U15</option><option>U18</option><option>Seniors</option><option>Seniors 3x3</option></select></div>
+    <div><label>Type</label><select id="m-type"><option>Championnat</option><option>Coupe</option><option>Plateau</option><option>Amical</option><option>Tournoi</option></select></div>
+  </div>
+  <div class="row r2"><div><label>Adversaire</label><input id="m-adv" placeholder="Nom du club"></div><div><label>Lieu</label><select id="m-lieu"><option value="domicile">🏠 Domicile</option><option value="exterieur">✈️ Extérieur</option></select></div></div>
+  <button class="btn btn-r btn-full" onclick="ajouterMatch()" style="margin-top:8px">Ajouter au planning</button>
+  </div>
+  <div class="card"><div class="card-title">📅 Planning saison 2026-2027</div>
+  <div id="matchs-table">${renderMatchsTable(matchs||[])}</div>
+  </div>
+  <div id="post-ia" class="card hidden"><div class="card-title">📱 Post généré automatiquement ⚡</div><div id="post-ia-text" style="background:#1A1A1A;border-radius:8px;padding:12px;font-size:12px;line-height:1.7;white-space:pre-wrap"></div><div class="btn-row"><button class="btn btn-g btn-sm" onclick="copyText(document.getElementById('post-ia-text').textContent)">📋 Copier</button></div></div>
+  </div>`;
+  window._matchs=matchs||[];
+}
+
+function renderMatchsTable(matchs){
+  if(!matchs.length)return'<div class="empty">Aucun match. Importez depuis FBI V2 ou ajoutez manuellement.</div>';
+  return`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Heure</th><th>Cat.</th><th>Adversaire</th><th>Lieu</th><th>Score</th><th>Résultat</th><th>Action</th></tr></thead><tbody>
+  ${matchs.map(m=>`<tr${m.lieu==='domicile'?' style="background:#1A1400"':''}>
+  <td style="font-weight:600;white-space:nowrap">${fmtD(m.date)}</td>
+  <td>${m.heure||'—'}</td>
+  <td><span class="badge b-b">${m.categorie}</span></td>
+  <td><strong>${m.adversaire}</strong></td>
+  <td><span class="badge ${m.lieu==='domicile'?'b-a':'b-x'}">${m.lieu==='domicile'?'🏠':'✈️'}</span></td>
+  <td style="font-weight:700;text-align:center">${m.score_gpbc!==null?`${m.score_gpbc}—${m.score_adversaire}`:'—'}</td>
+  <td>${m.resultat?`<span class="badge ${m.resultat==='V'?'b-g':m.resultat==='D'?'b-r':'b-a'}">${m.resultat==='V'?'Victoire':m.resultat==='D'?'Défaite':'Nul'}</span>`:'<span class="badge b-x">À jouer</span>'}</td>
+  <td>${!m.resultat?`<button class="btn btn-g btn-sm" onclick="saisirResultat('${m.id}','${m.adversaire}','${m.categorie}')">⚽ Score</button>`:'<span style="color:var(--txt3);font-size:10px">✓</span>'}</td>
+  </tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+async function ajouterMatch(){
+  const adv=document.getElementById('m-adv').value.trim();
+  if(!adv){toast('Adversaire requis',false);return;}
+  await DB.from('matchs').insert({date:document.getElementById('m-date').value,heure:document.getElementById('m-heure').value,categorie:document.getElementById('m-cat').value,type_competition:document.getElementById('m-type').value,lieu:document.getElementById('m-lieu').value,adversaire:adv,saison:'2026-2027'});
+  toast('✅ Match ajouté');
+  renderSportif(document.getElementById('main-content'));
+}
+
+async function saisirResultat(id,adv,cat){
+  const sg=prompt(`Score GPBC vs ${adv} ?`);if(sg===null)return;
+  const sa=prompt(`Score ${adv} ?`);if(sa===null)return;
+  const res=+sg>+sa?'V':+sg<+sa?'D':'N';
+  await DB.from('matchs').update({score_gpbc:+sg,score_adversaire:+sa,resultat:res}).eq('id',id);
+  toast(`✅ Résultat saisi — ${res==='V'?'Victoire':res==='D'?'Défaite':'Nul'}`);
+  // Générer post IA
+  genererPostResultat(cat,adv,sg,sa,res);
+  renderSportif(document.getElementById('main-content'));
+}
+
+async function genererPostResultat(cat,adv,sg,sa,res){
+  const label=res==='V'?'VICTOIRE':res==='D'?'DÉFAITE':'MATCH NUL';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:400,messages:[{role:'user',content:`Post Instagram GPBC (basket 100% féminin, Graveson 13). ${cat} · GPBC ${sg}-${sa} ${adv} · ${label}. Max 100 mots, emojis, hashtags #GPBC #BasketFéminin #Graveson. Direct, pas d'introduction.`}]})});
+    const d=await r.json();
+    const txt=d.content?.find(b=>b.type==='text')?.text||'';
+    if(txt){
+      document.getElementById('post-ia').classList.remove('hidden');
+      document.getElementById('post-ia-text').textContent=txt;
+    }
+  }catch(e){}
+}
+
+// ============================================================
+// MODULE SUBVENTIONS
+// ============================================================
+function renderSubventions(c){
+  const dossiers=[
+    {nom:'FDVA',montant:'3 000 €',deadline:'Fév. 2027',plateforme:'Le Compte Asso',urgence:'b-a'},
+    {nom:'Conseil Départemental 13',montant:'4 000 €',deadline:'Sept. 2026',plateforme:'Plateforme CD13',urgence:'b-r'},
+    {nom:'Région PACA',montant:'5 000 €',deadline:'Oct.–Déc. 2026',plateforme:'maregionsud.fr',urgence:'b-r'},
+    {nom:'FFBB PSF',montant:'2 500 €',deadline:'Automne 2026',plateforme:'Le Compte Asso',urgence:'b-a'},
+    {nom:'ANS / SDJES',montant:'3 500 €',deadline:'À confirmer',plateforme:'Le Compte Asso',urgence:'b-x'},
+  ];
+  c.innerHTML=`<div class="page">
+  <div class="kpis k3" style="margin-bottom:14px">
+    ${kpi('Dossiers générés','5 / 5','var(--green)','')}
+    ${kpi('Cerfa pré-remplis','5 / 5','var(--green)','')}
+    ${kpi('Potentiel total','18 000 €','var(--j)','gold')}
+  </div>
+  <div class="warn-box">⏰ <strong>CD13 et Région PACA — à déposer dès septembre 2026 !</strong></div>
+  ${dossiers.map(d=>`<div class="card"><div class="card-title">${d.nom} — ${d.montant}</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+  <div><div style="font-size:11px;color:#888;margin-bottom:4px">📅 Deadline : <strong style="color:var(--j)">${d.deadline}</strong> · ${d.plateforme}</div>
+  <span class="badge ${d.urgence}">${d.urgence==='b-r'?'🔴 Urgent':d.urgence==='b-a'?'🟡 À préparer':'⚪ En attente'}</span></div>
+  <div style="display:flex;gap:8px"><span class="badge b-g">📄 Dossier ✓</span><span class="badge b-g">📋 Cerfa ✓</span></div>
+  </div></div>`).join('')}
+  <div class="card"><div class="card-title">📎 Pièces communes à tous les dossiers</div>
+  ${[['Statuts GPBC','✓ OK'],['RNA W132009712','✓ OK'],['Liste bureau','✓ OK'],['RIB association','⚠️ Vérifier'],['Comptes 2025-2026','✓ Approuvés AG'],['Rapport d\'activité','✓ OK'],['Rescrit fiscal','🔄 En cours — 17/08']].map(([n,s])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:.5px solid var(--brd);font-size:12px"><span>${n}</span><span style="color:${s.startsWith('✓')?'var(--green)':s.startsWith('⚠️')?'var(--j)':'#888'}">${s}</span></div>`).join('')}
+  </div></div>`;
+}
+
+// ============================================================
+// MODULE SPONSORING
+// ============================================================
+async function renderSponsoring(c){
+  const {data:sps}=await DB.from('sponsors').select('*').order('montant',{ascending:false});
+  const {data:dons}=await DB.from('dons').select('*').order('date_don',{ascending:false});
+  const caTotal=(sps||[]).reduce((s,sp)=>s+(sp.montant||0),0);
+  const donsTotal=(dons||[]).reduce((s,d)=>s+d.montant,0);
+  const relances=(sps||[]).filter(s=>s.statut==='prospect'||s.statut==='renouveler').length;
+
+  c.innerHTML=`<div class="page">
+  <div class="kpis k4">
+    ${kpi('Partenaires actifs',(sps||[]).filter(s=>s.statut==='actif'||s.statut==='renouveler').length,'var(--blue)','')}
+    ${kpi('CA sponsoring',fmt(caTotal)+' €','var(--green)','')}
+    ${kpi('Dons reçus',fmt(donsTotal)+' €','var(--purple)','')}
+    ${kpi('Relances dues',relances,relances>0?'var(--j)':'var(--green)',relances>0?'gold':'')}
+  </div>
+  <div class="card"><div class="card-title">🤝 Partenaires</div>
+  <div class="table-wrap"><table><thead><tr><th>Partenaire</th><th>Pack</th><th>Montant</th><th>Statut</th><th>Action</th></tr></thead><tbody>
+  ${(sps||[]).map(s=>`<tr><td><strong>${s.nom}</strong>${s.contact?`<div style="font-size:10px;color:var(--txt3)">${s.contact}</div>`:''}</td>
+  <td style="font-size:10px">${s.pack||'—'}</td>
+  <td class="text-g" style="font-weight:700">${fmt(s.montant)} €</td>
+  <td><span class="badge ${s.statut==='actif'?'b-g':s.statut==='renouveler'?'b-a':s.statut==='prospect'?'b-b':'b-r'}">${s.statut}</span></td>
+  <td><button class="btn btn-g btn-sm" onclick="genLettreSponsor('${s.nom}','${s.pack||''}','${s.statut}')">📧 Lettre IA</button></td>
+  </tr>`).join('')}
+  </tbody></table></div>
+  <div class="sec-title">Ajouter un partenaire</div>
+  <div class="row r2"><div><label>Nom</label><input id="sp-nom" placeholder="ex: Garage Martin"></div><div><label>Pack</label><select id="sp-pack"><option>Ami du Club — 150 €</option><option>Partenaire — 300 €</option><option>Partenaire Or — 500 €</option><option>Bronze — 500 €</option><option>Or — 1 000 €</option><option>Premium — 2 000 €</option></select></div></div>
+  <div class="row r2"><div><label>Montant (€)</label><input type="number" id="sp-montant" placeholder="0"></div><div><label>Statut</label><select id="sp-statut"><option value="prospect">Prospect</option><option value="en-cours">En cours</option><option value="actif">Actif</option><option value="renouveler">À renouveler</option></select></div></div>
+  <div><label>Contact + Notes</label><input id="sp-notes" placeholder="Nom du contact, contexte..."></div>
+  <button class="btn btn-r btn-full" onclick="ajouterSponsor()" style="margin-top:8px">Ajouter le partenaire</button>
+  </div>
+  <div class="card"><div class="card-title">💚 Dons & Reçus fiscaux</div>
+  <div class="warn-box">⚖️ Un reçu fiscal ne peut être émis que pour un don SANS contrepartie. Rescrit fiscal en cours d'obtention.</div>
+  <div id="dons-table">${renderDonsTable(dons||[])}</div>
+  <div class="sec-title">Enregistrer un don</div>
+  <div class="row r2"><div><label>Donateur</label><input id="d-nom" placeholder="Nom complet"></div><div><label>Montant (€)</label><input type="number" id="d-montant" placeholder="0"></div></div>
+  <div class="row r2"><div><label>Date</label><input type="date" id="d-date" value="${today()}"></div><div><label>Type</label><select id="d-type"><option value="particulier">Particulier (66%)</option><option value="entreprise">Entreprise (60%)</option></select></div></div>
+  <div class="row r2"><div><label>Mode</label><select id="d-mode"><option>Virement</option><option>Chèque</option><option>Espèces</option></select></div><div><label>Adresse</label><input id="d-adresse" placeholder="Adresse du donateur"></div></div>
+  <button class="btn btn-r btn-full" onclick="enregistrerDon()" style="margin-top:8px">Enregistrer + Générer reçu fiscal</button>
+  <div id="don-recu" class="hidden" style="margin-top:10px"></div>
+  </div>
+  <div id="sp-lettre" class="card hidden"><div class="card-title">📧 Lettre générée</div><div id="sp-lettre-text" style="background:#1A1A1A;border-radius:8px;padding:12px;font-size:12px;line-height:1.7;white-space:pre-wrap"></div><div class="btn-row"><button class="btn btn-g btn-sm" onclick="copyText(document.getElementById('sp-lettre-text').textContent)">📋 Copier</button></div></div>
+  </div>`;
+}
+
+function renderDonsTable(dons){
+  if(!dons.length)return'<div class="empty">Aucun don enregistré.</div>';
+  return`<div class="table-wrap"><table><thead><tr><th>N° Reçu</th><th>Donateur</th><th>Date</th><th>Montant</th><th>Réduction</th><th>Reçu</th></tr></thead><tbody>
+  ${dons.map(d=>{const taux=d.type_donateur==='particulier'?66:60;const red=Math.round(d.montant*taux/100);return`<tr>
+  <td style="font-size:10px;color:var(--txt3)">${d.numero}</td>
+  <td><strong>${d.nom_donateur}</strong></td>
+  <td>${fmtD(d.date_don)}</td>
+  <td class="text-g" style="font-weight:700">${fmt(d.montant)} €</td>
+  <td style="color:var(--green)">−${fmt(red)} € (${taux}%)</td>
+  <td><span class="badge ${d.recu_emis?'b-g':'b-a'}">${d.recu_emis?'✓ Émis':'À émettre'}</span></td>
+  </tr>`;}).join('')}
+  </tbody></table></div>`;
+}
+
+async function ajouterSponsor(){
+  const nom=document.getElementById('sp-nom').value.trim();
+  if(!nom){toast('Nom requis',false);return;}
+  const montant=+document.getElementById('sp-montant').value||0;
+  const statut=document.getElementById('sp-statut').value;
+  await DB.from('sponsors').insert({nom,pack:document.getElementById('sp-pack').value,montant,statut,notes:document.getElementById('sp-notes').value});
+  if(statut==='actif'&&montant>0){
+    await DB.from('ecritures').insert({type:'recette',date:today(),montant,categorie:'Don / Sponsor',tiers:nom,mode:'Virement',description:`Partenariat ${document.getElementById('sp-pack').value}`,created_by:STATE.user.id});
+    toast(`✅ ${nom} ajouté — recette ${fmt(montant)} € créée en trésorerie ⚡`);
+  } else toast(`✅ ${nom} ajouté`);
+  renderSponsoring(document.getElementById('main-content'));
+}
+
+async function enregistrerDon(){
+  const nom=document.getElementById('d-nom').value.trim();
+  const montant=+document.getElementById('d-montant').value;
+  if(!nom||!montant){toast('Nom et montant requis',false);return;}
+  const {data:existing}=await DB.from('dons').select('id').like('numero',`GPBC-${new Date().getFullYear()}-%`);
+  const numero=`GPBC-${new Date().getFullYear()}-${String((existing?.length||0)+1).padStart(3,'0')}`;
+  const taux=document.getElementById('d-type').value==='particulier'?66:60;
+  const red=Math.round(montant*taux/100);
+  const {error}=await DB.from('dons').insert({numero,nom_donateur:nom,adresse:document.getElementById('d-adresse').value,date_don:document.getElementById('d-date').value,montant,mode_versement:document.getElementById('d-mode').value,type_donateur:document.getElementById('d-type').value,objet:'Soutien GPBC sans contrepartie',recu_emis:true});
+  if(error){toast('Erreur : '+error.message,false);return;}
+  await DB.from('ecritures').insert({type:'recette',date:document.getElementById('d-date').value,montant,categorie:'Don associatif',tiers:nom,mode:document.getElementById('d-mode').value,description:`Don ${document.getElementById('d-type').value} - ${numero}`,created_by:STATE.user.id});
+  const recuEl=document.getElementById('don-recu');
+  recuEl.classList.remove('hidden');
+  recuEl.innerHTML=`<div style="border:2px solid var(--r);border-radius:8px;padding:14px;font-size:11px;line-height:1.9">
+  <div style="text-align:center;font-weight:700;font-size:14px;color:var(--r);margin-bottom:10px;border-bottom:2px solid var(--r);padding-bottom:6px">REÇU FISCAL — Cerfa n°11580</div>
+  <table style="width:100%;font-size:12px"><tr><td style="color:#888;width:45%;padding:3px 0">N° du reçu :</td><td><strong>${numero}</strong></td></tr>
+  <tr><td style="color:#888;padding:3px 0">Association :</td><td><strong>GRAVESON PROVENCE BASKET CLUB</strong></td></tr>
+  <tr><td style="color:#888;padding:3px 0">RNA :</td><td>W132009712</td></tr>
+  <tr><td style="color:#888;padding:3px 0">SIRET :</td><td>913 100 335 00011</td></tr>
+  <tr><td style="color:#888;padding:3px 0">Donateur :</td><td><strong>${nom}</strong></td></tr>
+  <tr><td style="color:#888;padding:3px 0">Montant du don :</td><td><strong style="font-size:16px;color:var(--r)">${fmt(montant)} €</strong></td></tr>
+  <tr><td style="color:#888;padding:3px 0">Réduction d'impôt (${taux}%) :</td><td><strong style="color:var(--green)">−${fmt(red)} €</strong></td></tr></table>
+  <div style="margin-top:12px;font-size:11px;border-top:1px solid var(--brd);padding-top:8px">Fait à Graveson, le ${new Date().toLocaleDateString('fr-FR')}<br>Signature : _________________________ — Olivier FAURE, Président</div>
+  </div><div class="btn-row"><button class="btn btn-g btn-sm" onclick="window.print()">🖨️ Imprimer</button></div>`;
+  toast(`✅ Don ${nom} enregistré — Reçu ${numero} généré ⚡`);
+}
+
+async function genLettreSponsor(nom,pack,statut){
+  const type=statut==='renouveler'?'renouvellement':statut==='actif'?'remerciement':'sollicitation';
+  const el=document.getElementById('sp-lettre');const txt=document.getElementById('sp-lettre-text');
+  el.classList.remove('hidden');txt.textContent='Génération en cours...';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,messages:[{role:'user',content:`Lettre de ${type} partenariat GPBC pour ${nom}. Pack : ${pack}. GPBC = basket 100% féminin, Graveson 13, 88 licenciées, U5 aux Seniors. Ton chaleureux et professionnel. Max 180 mots. Signe "Olivier FAURE, Président GPBC". Direct, pas d'intro méta.`}]})});
+    const d=await r.json();
+    txt.textContent=d.content?.find(b=>b.type==='text')?.text||'Erreur';
+  }catch(e){txt.textContent='Erreur de connexion IA';}
+}
+
+// ============================================================
+// MODULE RÉUNIONS
+// ============================================================
+async function renderReunions(c){
+  const {data:reunions}=await DB.from('reunions').select('*').order('date',{ascending:false});
+  const avenir=(reunions||[]).filter(r=>r.date>=today()).length;
+
+  c.innerHTML=`<div class="page">
+  <div class="kpis k3">
+    ${kpi('Total réunions',(reunions||[]).length,'var(--blue)','')}
+    ${kpi('À venir',avenir,'var(--green)','')}
+    ${kpi('PV à rédiger',(reunions||[]).filter(r=>r.date<today()&&r.statut!=='terminee').length,'var(--j)','')}
+  </div>
+  <div class="card"><div class="card-title">➕ Nouvelle réunion</div>
+  <div class="row r2"><div><label>Type</label><select id="r-type"><option>Bureau</option><option>AG Ordinaire</option><option>AG Extraordinaire</option><option>Comité technique</option></select></div><div><label>Date</label><input type="date" id="r-date" value="${today()}"></div></div>
+  <div class="row r2"><div><label>Heure</label><input type="time" id="r-heure" value="18:30"></div><div><label>Lieu</label><input id="r-lieu" placeholder="ex: Gymnase de Graveson"></div></div>
+  <div><label>Objet</label><input id="r-objet" placeholder="ex: Préparation saison 2026-2027"></div>
+  <div class="sec-title">Ordre du jour</div>
+  <div class="row r2"><div><label>Point ODJ</label><input id="odj-point" placeholder="ex: Adoption règlement intérieur"></div><div><label>Durée</label><input id="odj-duree" placeholder="ex: 20 min"></div></div>
+  <button class="btn btn-g btn-sm" onclick="ajouterPoint()" style="margin-bottom:8px">+ Ajouter ce point</button>
+  <div id="odj-list" style="margin-bottom:8px"></div>
+  <button class="btn btn-r btn-full" onclick="creerReunion()">Créer la réunion</button>
+  </div>
+  <div class="card"><div class="card-title">📅 Réunions</div>
+  ${(reunions||[]).map(r=>`<div style="background:#111;border-radius:8px;padding:12px;margin-bottom:8px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+  <div><div style="font-weight:700">${r.type} — ${r.objet||'Sans objet'}</div>
+  <div style="font-size:11px;color:var(--txt2)">${fmtDL(r.date)} à ${r.heure||'—'} · ${r.lieu||'Lieu à définir'}</div>
+  <div style="font-size:11px;color:var(--txt3);margin-top:3px">${r.membres||''}</div>
+  ${r.odj&&r.odj.length>0?`<div style="font-size:11px;color:var(--txt3);margin-top:4px">ODJ : ${r.odj.map((p,i)=>`${i+1}. ${p.point}`).join(' · ')}</div>`:''}</div>
+  <span class="badge ${r.statut==='terminee'?'b-g':r.date<today()?'b-a':'b-b'}">${r.statut==='terminee'?'Terminée':r.date<today()?'PV à rédiger':'Planifiée'}</span>
+  </div>
+  <div class="btn-row" style="margin-top:8px">
+  <button class="btn btn-g btn-sm" onclick="envoyerConvocation('${r.id}')">📧 Convocation</button>
+  <button class="btn btn-g btn-sm" onclick="genererPV('${r.id}')">📝 PV</button>
+  </div></div>`).join('')||'<div class="empty">Aucune réunion.</div>'}
+  </div>
+  </div>`;
+  window._odj=[];
+}
+
+window._odj=[];
+function ajouterPoint(){
+  const pt=document.getElementById('odj-point').value.trim();if(!pt)return;
+  window._odj.push({point:pt,duree:document.getElementById('odj-duree').value||'15 min'});
+  document.getElementById('odj-list').innerHTML=window._odj.map((p,i)=>`<div style="background:var(--bg3);border-radius:6px;padding:8px 12px;margin-bottom:5px;display:flex;align-items:center;gap:8px"><span style="background:var(--r);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${i+1}</span><span style="flex:1;font-size:12px">${p.point}</span><span style="font-size:10px;color:var(--txt3)">${p.duree}</span></div>`).join('');
+  document.getElementById('odj-point').value='';document.getElementById('odj-duree').value='';
+}
+
+async function creerReunion(){
+  const date=document.getElementById('r-date').value;const objet=document.getElementById('r-objet').value.trim();
+  if(!date||!objet){toast('Date et objet requis',false);return;}
+  await DB.from('reunions').insert({type:document.getElementById('r-type').value,date,heure:document.getElementById('r-heure').value,lieu:document.getElementById('r-lieu').value,membres:'Olivier FAURE · Sarah HUBERT · Charlotte FAURE',objet,odj:window._odj,statut:'planifiee'});
+  toast('✅ Réunion créée');
+  renderReunions(document.getElementById('main-content'));
+}
+
+async function envoyerConvocation(id){
+  const {data:r}=await DB.from('reunions').select('*').eq('id',id).single();
+  if(!r)return;
+  const subj=encodeURIComponent(`Convocation — ${r.type} GPBC — ${fmtDL(r.date)}`);
+  const body=encodeURIComponent(`Bonjour,\n\nJe vous convoque à la ${r.type} du GPBC.\n\n📅 ${fmtDL(r.date)}\n⏰ ${r.heure}\n📍 ${r.lieu||'Lieu à confirmer'}\n\nODJ :\n${(r.odj||[]).map((p,i)=>`${i+1}. ${p.point} — ${p.duree}`).join('\n')}\n\nCordialement,\nOlivier FAURE — Président GPBC`);
+  window.open(`mailto:?subject=${subj}&body=${body}`);
+}
+
+async function genererPV(id){
+  const {data:r}=await DB.from('reunions').select('*').eq('id',id).single();
+  if(!r)return;
+  const txt=`PROCÈS-VERBAL — ${r.type.toUpperCase()}\n${r.objet||''}\n${fmtDL(r.date)} à ${r.heure}\n${r.lieu||''}\n\nMEMBRES PRÉSENTS : ${r.membres||''}\n\nORDRE DU JOUR :\n${(r.odj||[]).map((p,i)=>`\n${i+1}. ${p.point}\n   Décision : [À COMPLÉTER]\n   Vote : Pour ___ / Contre ___ / Abstention ___`).join('')}\n\nHEURE DE CLÔTURE : [À COMPLÉTER]\n\nSignatures :\nOlivier FAURE (Président) _______________\nSarah HUBERT (Secrétaire) _______________\nCharlotte FAURE (Trésorière) _______________`;
+  const blob=new Blob([txt],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`PV_${r.type}_${r.date}_GPBC.txt`;a.click();
+  toast('✅ PV téléchargé');
+}
+
+// ============================================================
+// MODULE COMMUNICATION
+// ============================================================
+async function renderCommunication(c){
+  c.innerHTML=`<div class="page">
+  <div class="card"><div class="card-title">📱 Générateur de posts</div>
+  <div class="row r2">
+    <div><label>Type de post</label><select id="post-type"><option value="annonce">📣 Annonce match</option><option value="resultat">🏆 Résultat</option><option value="evenement">🎉 Événement</option><option value="recrutement">🏀 Recrutement</option><option value="sponsor">🤝 Mise en avant sponsor</option></select></div>
+    <div><label>Ton</label><select id="post-ton"><option value="enthousiaste">🔥 Enthousiaste</option><option value="chaleureux">💛 Chaleureux</option><option value="sobre">📋 Sobre</option></select></div>
+  </div>
+  <div><label>Informations clés</label><textarea id="post-infos" placeholder="Ex: U15 vs Cavaillon samedi 14h, match décisif pour le classement..."></textarea></div>
+  <button class="btn btn-r btn-full" id="btn-gen-post" onclick="genererPost()" style="margin-top:8px">🤖 Générer les posts</button>
+  <div id="post-output" class="hidden">
+    <div class="sec-title">Posts générés</div>
+    <div style="margin-bottom:6px"><div style="font-size:10px;color:var(--txt3);margin-bottom:4px">📸 INSTAGRAM</div><div id="p-insta" style="background:#1A1A1A;border-radius:7px;padding:10px;font-size:12px;line-height:1.7;white-space:pre-wrap;margin-bottom:4px"></div><button class="btn btn-g btn-sm" onclick="copyText(document.getElementById('p-insta').textContent)">📋 Copier Instagram</button></div>
+    <div style="margin-bottom:6px"><div style="font-size:10px;color:var(--txt3);margin-bottom:4px">👥 FACEBOOK</div><div id="p-fb" style="background:#1A1A1A;border-radius:7px;padding:10px;font-size:12px;line-height:1.7;white-space:pre-wrap;margin-bottom:4px"></div><button class="btn btn-g btn-sm" onclick="copyText(document.getElementById('p-fb').textContent)">📋 Copier Facebook</button></div>
+    <div><div style="font-size:10px;color:var(--txt3);margin-bottom:4px">⚡ STORY</div><div id="p-story" style="background:#1A1A1A;border-radius:7px;padding:10px;font-size:12px;line-height:1.7;white-space:pre-wrap;margin-bottom:4px"></div><button class="btn btn-g btn-sm" onclick="copyText(document.getElementById('p-story').textContent)">📋 Copier Story</button></div>
+  </div>
+  </div>
+  <div class="card"><div class="card-title">📧 Newsletter mensuelle</div>
+  <div class="row r2"><div><label>Mois / N°</label><input id="nl-mois" placeholder="ex: Septembre 2026 — N°1"></div><div><label>Accroche</label><input id="nl-accroche" placeholder="ex: La saison est lancée !"></div></div>
+  <div><label>Résultats sportifs</label><textarea id="nl-resultats" placeholder="ex: U15 victoire 38-24 vs Tarascon..."></textarea></div>
+  <div><label>Événements à venir</label><textarea id="nl-events" placeholder="ex: Tournoi de Noël le 15 décembre..."></textarea></div>
+  <div><label>Infos pratiques</label><input id="nl-infos" placeholder="ex: Rappel cotisations avant le 30/09"></div>
+  <button class="btn btn-r btn-full" id="btn-gen-nl" onclick="genererNewsletter()" style="margin-top:8px">🤖 Générer la newsletter</button>
+  <div id="nl-output" class="hidden"><div class="sep"></div><div id="nl-text" style="background:#1A1A1A;border-radius:8px;padding:14px;font-size:12px;line-height:1.9;white-space:pre-wrap"></div><div class="btn-row"><button class="btn btn-g btn-sm" onclick="copyText(document.getElementById('nl-text').textContent)">📋 Copier</button><button class="btn btn-g btn-sm" onclick="ouvrirEmailNL()">📧 Email</button></div></div>
+  </div>
+  <div class="card"><div class="card-title">💬 Message rapide familles</div>
+  <div class="row r2"><div><label>Type</label><select id="msg-type"><option>Rappel match</option><option>Changement horaire</option><option>Convocation joueuses</option><option>Infos générales</option><option>Urgence</option></select></div><div><label>Catégorie</label><select id="msg-cat"><option>Toutes catégories</option><option>U11</option><option>U13</option><option>U15</option><option>U18</option><option>Seniors</option></select></div></div>
+  <div><label>Informations</label><textarea id="msg-infos" placeholder="ex: Match samedi 14h au lieu de 15h, gymnase inchangé..."></textarea></div>
+  <button class="btn btn-r btn-full" id="btn-gen-msg" onclick="genererMessage()" style="margin-top:8px">🤖 Générer le message</button>
+  <div id="msg-output" class="hidden"><div class="sep"></div><div id="msg-text" style="background:#1A1A1A;border-radius:8px;padding:12px;font-size:12px;line-height:1.7;white-space:pre-wrap"></div><div class="btn-row"><button class="btn btn-g btn-sm" onclick="copyText(document.getElementById('msg-text').textContent)">📋 Copier</button><button class="btn btn-j btn-sm" onclick="window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('msg-text').textContent))">💬 WhatsApp</button></div></div>
+  </div>
+  </div>`;
+}
+
+async function genererPost(){
+  const btn=document.getElementById('btn-gen-post');btn.disabled=true;btn.textContent='Génération...';
+  const infos=document.getElementById('post-infos').value;
+  const type=document.getElementById('post-type').value;
+  const ton=document.getElementById('post-ton').value;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,messages:[{role:'user',content:`Community manager GPBC (basket 100% féminin, Graveson 13, 88 licenciées). Type: ${type}. Ton: ${ton}. Infos: ${infos||'Match GPBC'}. Génère 3 posts en JSON STRICT: {"instagram":"post 100-150 mots emojis hashtags #GPBC #BasketFéminin #Graveson","facebook":"post 150-200 mots chaleureux familles","story":"max 12 mots percutants emojis"}. JSON UNIQUEMENT, pas de texte avant/après.`}]})});
+    const d=await r.json();
+    const raw=d.content?.find(b=>b.type==='text')?.text||'{}';
+    const posts=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    document.getElementById('p-insta').textContent=posts.instagram||'';
+    document.getElementById('p-fb').textContent=posts.facebook||'';
+    document.getElementById('p-story').textContent=posts.story||'';
+    document.getElementById('post-output').classList.remove('hidden');
+    toast('✅ 3 posts générés !');
+  }catch(e){toast('Erreur IA',false);}
+  btn.disabled=false;btn.textContent='🤖 Générer les posts';
+}
+
+async function genererNewsletter(){
+  const btn=document.getElementById('btn-gen-nl');btn.disabled=true;btn.textContent='Génération...';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:`Newsletter GPBC (basket 100% féminin Graveson 13). Mois: ${document.getElementById('nl-mois').value||'Saison 2026-2027'}. Accroche: ${document.getElementById('nl-accroche').value}. Résultats: ${document.getElementById('nl-resultats').value}. Événements: ${document.getElementById('nl-events').value}. Infos: ${document.getElementById('nl-infos').value}. Sponsors: AMO Invest, TPK, SOJUFEL, Leclerc. Ton chaleureux pour les familles. Newsletter complète avec sections claires. Max 400 mots.`}]})});
+    const d=await r.json();
+    const txt=d.content?.find(b=>b.type==='text')?.text||'';
+    document.getElementById('nl-text').textContent=txt;
+    document.getElementById('nl-output').classList.remove('hidden');
+    toast('✅ Newsletter générée !');
+  }catch(e){toast('Erreur IA',false);}
+  btn.disabled=false;btn.textContent='🤖 Générer la newsletter';
+}
+
+async function genererMessage(){
+  const btn=document.getElementById('btn-gen-msg');btn.disabled=true;btn.textContent='Génération...';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:`Message WhatsApp GPBC pour familles ${document.getElementById('msg-cat').value}. Type: ${document.getElementById('msg-type').value}. Infos: ${document.getElementById('msg-infos').value||'Message général'}. Max 80 mots. Bienveillant. Signe "L'équipe GPBC 🏀". Direct, pas d'intro.`}]})});
+    const d=await r.json();
+    const txt=d.content?.find(b=>b.type==='text')?.text||'';
+    document.getElementById('msg-text').textContent=txt;
+    document.getElementById('msg-output').classList.remove('hidden');
+    toast('✅ Message généré !');
+  }catch(e){toast('Erreur IA',false);}
+  btn.disabled=false;btn.textContent='🤖 Générer le message';
+}
+
+function ouvrirEmailNL(){
+  const txt=document.getElementById('nl-text').textContent;
+  const subj=encodeURIComponent('Newsletter GPBC — '+document.getElementById('nl-mois').value);
+  window.open(`mailto:?subject=${subj}&body=${encodeURIComponent(txt)}`);
+}
+
+// ============================================================
+// AGENT IA
+// ============================================================
+async function renderAgent(c){
+  c.innerHTML=`<div class="page"><div class="card"><div class="card-title">🤖 Agent IA — Questions libres sur le GPBC</div>
+  <div class="info-box">Je connais toutes vos données en temps réel. Posez n'importe quelle question : solde, licences, matchs, subventions, sponsors, stratégie...</div>
+  <div class="chat-wrap">
+    <div class="chat-msgs" id="agent-msgs">
+      <div class="msg msg-bot">Bonjour ! Je suis l'assistant GPBC. Je connais vos données en temps réel. Posez-moi n'importe quelle question sur le club, la trésorerie, les licences, les subventions...</div>
+    </div>
+    <div class="chat-in-row">
+      <input class="chat-in" id="agent-input" placeholder="Ex: Quel est notre solde ? Qui a un impayé ? Quand déposer la subvention FDVA ?" onkeydown="if(event.key==='Enter')envoyerAgent()">
+      <button class="btn btn-r" onclick="envoyerAgent()">Envoyer</button>
+    </div>
+  </div>
+  </div></div>`;
+}
+
+async function envoyerAgent(){
+  const input=document.getElementById('agent-input');const msg=input.value.trim();if(!msg)return;
+  const msgs=document.getElementById('agent-msgs');
+  msgs.innerHTML+=`<div class="msg msg-user">${msg}</div>`;
+  input.value='';
+  msgs.innerHTML+=`<div class="msg msg-bot" id="agent-typing"><span class="typing"></span></div>`;
+  msgs.scrollTop=msgs.scrollHeight;
+
+  // Charger le contexte
+  const [ecrR,licR,matchR,spR,donR]=await Promise.all([
+    DB.from('ecritures').select('type,montant,en_attente,est_comite,tiers,date').order('date',{ascending:false}).limit(20),
+    DB.from('licences').select('nom,prenom,categorie,statut,restant_du,saison').eq('saison','2026-2027'),
+    DB.from('matchs').select('date,categorie,adversaire,resultat,score_gpbc,score_adversaire').eq('saison','2026-2027'),
+    DB.from('sponsors').select('nom,montant,statut,pack'),
+    DB.from('dons').select('montant,type_donateur'),
+  ]);
+  const ecr=ecrR.data||[];const lics=licR.data||[];const matchs=matchR.data||[];const sps=spR.data||[];const dons=donR.data||[];
+  const rec=ecr.filter(e=>e.type==='recette'&&!e.en_attente).reduce((s,e)=>s+e.montant,0);
+  const dep=ecr.filter(e=>e.type==='depense'&&!e.est_comite).reduce((s,e)=>s+e.montant,0);
+  const impayees=lics.filter(l=>l.restant_du>0);
+
+  const context=`GPBC — Graveson Provence Basket Club — Saison 2026-2027
+Club 100% féminin · 88 licenciées · Président : Olivier FAURE
+SIRET : 913 100 335 00011 · RNA : W132009712
+
+TRÉSORERIE : Recettes ${fmt(rec)} € · Dépenses ${fmt(dep)} € · Solde estimé ${fmt(rec-dep)} €
+LICENCES : ${lics.length} dont VALIDÉE:${lics.filter(l=>l.statut==='VALIDÉE').length} · PARTIELLE:${lics.filter(l=>l.statut==='PARTIELLE').length} · IMPAYÉE:${lics.filter(l=>l.statut==='IMPAYÉE').length}
+IMPAYÉES : ${impayees.map(l=>`${l.prenom} ${l.nom} (${fmt(l.restant_du)} €)`).join(', ')||'Aucune'}
+MATCHS : ${matchs.length} · Victoires:${matchs.filter(m=>m.resultat==='V').length} · Défaites:${matchs.filter(m=>m.resultat==='D').length} · À venir:${matchs.filter(m=>m.date>=new Date().toISOString().split('T')[0]&&!m.resultat).length}
+SPONSORS : ${sps.map(s=>`${s.nom} (${fmt(s.montant)} €, ${s.statut})`).join(', ')}
+DONS : ${dons.length} dons · Total ${fmt(dons.reduce((s,d)=>s+d.montant,0))} €
+SUBVENTIONS POTENTIELLES : FDVA 3000€ (Fév2027) · CD13 4000€ (Sept2026) · Région 5000€ (Oct-Déc2026) · FFBB PSF 2500€ · ANS 3500€ = 18000€ total
+
+Question : ${msg}`;
+
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ANTHROPIC_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:context}]})});
+    const d=await r.json();
+    const rep=d.content?.find(b=>b.type==='text')?.text||'Désolé, je n\'ai pas pu répondre.';
+    document.getElementById('agent-typing').outerHTML=`<div class="msg msg-bot">${rep}</div>`;
+  }catch(e){document.getElementById('agent-typing').outerHTML=`<div class="msg msg-bot">Erreur de connexion.</div>`;}
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+// ============================================================
+// MODULE ADMIN
+// ============================================================
+async function renderAdmin(c){
+  const {data:users}=await DB.from('utilisateurs').select('id,nom,prenom,email,role,actif,last_login').order('nom');
+  const {data:logs}=await DB.from('logs').select('*').order('created_at',{ascending:false}).limit(20);
+
+  c.innerHTML=`<div class="page">
+  <div class="card"><div class="card-title">⚙️ Gestion des utilisateurs</div>
+  <div class="table-wrap"><table><thead><tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Actif</th><th>Dernière connexion</th><th>Action</th></tr></thead><tbody>
+  ${(users||[]).map(u=>`<tr>
+  <td><strong>${u.prenom} ${u.nom}</strong></td>
+  <td style="font-size:10px">${u.email}</td>
+  <td><span class="badge ${u.role==='admin'?'b-r':u.role==='tresoriere'?'b-g':u.role==='secretaire'?'b-b':'b-x'}">${u.role}</span></td>
+  <td><span class="badge ${u.actif?'b-g':'b-r'}">${u.actif?'Actif':'Inactif'}</span></td>
+  <td style="font-size:10px;color:var(--txt3)">${u.last_login?new Date(u.last_login).toLocaleDateString('fr-FR'):'Jamais'}</td>
+  <td><button class="btn btn-g btn-sm" onclick="changerMDP('${u.id}','${u.prenom} ${u.nom}')">🔑 MDP</button></td>
+  </tr>`).join('')}
+  </tbody></table></div>
+  <div class="sec-title">Ajouter un utilisateur</div>
+  <div class="row r2"><div><label>Prénom</label><input id="nu-prenom"></div><div><label>Nom</label><input id="nu-nom"></div></div>
+  <div class="row r2"><div><label>Email</label><input type="email" id="nu-email"></div><div><label>Mot de passe</label><input type="password" id="nu-pass" placeholder="Minimum 8 caractères"></div></div>
+  <div><label>Rôle</label><select id="nu-role"><option value="coach">Coach (planning seul)</option><option value="comm">Communication</option><option value="secretaire">Secrétaire (licences + réunions)</option><option value="tresoriere">Trésorière (tréso + licences)</option><option value="admin">Admin (tout)</option></select></div>
+  <button class="btn btn-r btn-full" onclick="ajouterUtilisateur()" style="margin-top:8px">Créer l'utilisateur</button>
+  </div>
+  <div class="card"><div class="card-title">📋 Journaux d'activité (RGPD)</div>
+  <div class="table-wrap"><table><thead><tr><th>Date</th><th>Action</th><th>Détails</th></tr></thead><tbody>
+  ${(logs||[]).map(l=>`<tr><td style="font-size:10px;white-space:nowrap">${new Date(l.created_at).toLocaleString('fr-FR')}</td><td><span class="badge b-b">${l.action}</span></td><td style="font-size:10px;color:var(--txt3)">${l.details||'—'}</td></tr>`).join('')||'<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--txt3)">Aucun log</td></tr>'}
+  </tbody></table></div>
+  </div></div>`;
+}
+
+async function changerMDP(id,nom){
+  const mdp=prompt(`Nouveau mot de passe pour ${nom} :`);
+  if(!mdp||mdp.length<4){toast('Mot de passe trop court',false);return;}
+  // Stocker en clair pour V1 (dans V2 on utilisera Supabase Auth avec bcrypt)
+  await DB.from('utilisateurs').update({password_hash:mdp}).eq('id',id);
+  toast(`✅ Mot de passe de ${nom} changé`);
+  await DB.from('logs').insert({utilisateur_id:STATE.user.id,action:'CHANGE_MDP',details:`MDP changé pour ${nom}`});
+}
+
+async function ajouterUtilisateur(){
+  const prenom=document.getElementById('nu-prenom').value.trim();
+  const nom=document.getElementById('nu-nom').value.trim();
+  const email=document.getElementById('nu-email').value.trim();
+  const pass=document.getElementById('nu-pass').value;
+  const role=document.getElementById('nu-role').value;
+  if(!prenom||!nom||!email||!pass){toast('Tous les champs sont requis',false);return;}
+  const {error}=await DB.from('utilisateurs').insert({prenom,nom,email,password_hash:pass,role,actif:true});
+  if(error){toast('Erreur : '+error.message,false);return;}
+  await DB.from('logs').insert({utilisateur_id:STATE.user.id,action:'USER_CREATE',details:`${prenom} ${nom} (${role})`});
+  toast(`✅ ${prenom} ${nom} ajouté avec le rôle ${role}`);
+  renderAdmin(document.getElementById('main-content'));
+}
+
+// ============================================================
+// BOUCLE ANNUELLE
+// ============================================================
+async function renderBoucle(c){
+  c.innerHTML=`<div class="page">
+  <div class="card"><div class="card-title">🔄 Boucle annuelle — Saison 2025-2026 → 2026-2027</div>
+  <div class="warn-box">⚠️ Cette opération archive la saison et remet les compteurs à zéro. Les sponsors et paramètres sont conservés. Une sauvegarde complète est créée avant toute action.</div>
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="background:#111;border:.5px solid var(--brd);border-radius:9px;padding:14px">
+      <div style="font-weight:700;margin-bottom:8px">① Archiver la saison 2025-2026</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px">Sauvegarde permanente de toutes les données dans Supabase (table archives).</div>
+      <button class="btn btn-j btn-full" onclick="archiverSaison()">📦 Archiver la saison 2025-2026</button>
+    </div>
+    <div style="background:#111;border:.5px solid var(--brd);border-radius:9px;padding:14px">
+      <div style="font-weight:700;margin-bottom:8px">② Réinitialiser pour 2026-2027</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px">Efface écritures, licences, matchs, réunions. Conserve sponsors et paramètres.</div>
+      <button class="btn btn-r btn-full" onclick="reinitialiserSaison()">🔄 Réinitialiser pour 2026-2027</button>
+    </div>
+    <div style="background:#111;border:.5px solid var(--brd);border-radius:9px;padding:14px">
+      <div style="font-weight:700;margin-bottom:8px">③ Importer le planning FBI V2</div>
+      <div style="font-size:11px;color:var(--txt3)">Dès que la FFBB publie les championnats, importez le planning dans le module Sportif.</div>
+    </div>
+  </div>
+  <div id="boucle-result"></div>
+  </div></div>`;
+}
+
+async function archiverSaison(){
+  if(!confirm('Confirmer l\'archivage de la saison 2025-2026 ? Cette action est définitive.'))return;
+  const [ecrR,licR,matchR,donR,reunR]=await Promise.all([
+    DB.from('ecritures').select('*'),DB.from('licences').select('*'),
+    DB.from('matchs').select('*'),DB.from('dons').select('*'),DB.from('reunions').select('*'),
+  ]);
+  const archive={saison:'2025-2026',date_archive:new Date().toISOString(),ecritures:ecrR.data,licences:licR.data,matchs:matchR.data,dons:donR.data,reunions:reunR.data};
+  const {error}=await DB.from('archives').insert({saison:'2025-2026',donnees:archive});
+  if(error){toast('Erreur archivage : '+error.message,false);return;}
+  await DB.from('logs').insert({utilisateur_id:STATE.user.id,action:'ARCHIVE',details:'Saison 2025-2026 archivée'});
+  toast('✅ Saison 2025-2026 archivée dans Supabase !');
+  document.getElementById('boucle-result').innerHTML='<div class="ok-box">✅ Archivage terminé. Vous pouvez maintenant réinitialiser pour 2026-2027.</div>';
+}
+
+async function reinitialiserSaison(){
+  if(!confirm('ATTENTION : Cette action efface toutes les écritures, licences, matchs et réunions. Avez-vous bien archivé la saison d\'abord ?'))return;
+  if(!confirm('Dernière confirmation : effacer toutes les données de la saison en cours ?'))return;
+  await Promise.all([
+    DB.from('ecritures').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+    DB.from('licences').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+    DB.from('matchs').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+    DB.from('reunions').delete().neq('id','00000000-0000-0000-0000-000000000000'),
+  ]);
+  await DB.from('parametres').upsert({cle:'club.saison',valeur:'2026-2027'});
+  await DB.from('logs').insert({utilisateur_id:STATE.user.id,action:'REINIT',details:'Réinitialisation pour saison 2026-2027'});
+  toast('✅ Réinitialisé pour 2026-2027 !');
+  document.getElementById('boucle-result').innerHTML='<div class="ok-box">✅ Réinitialisation terminée. La saison 2026-2027 peut commencer !</div>';
+}
+
+// ============================================================
+// DÉMARRAGE
+// ============================================================
+window.addEventListener('load', ()=>{
+  // Insérer l'admin par défaut si Supabase est configuré
+  setTimeout(async()=>{
+    try{
+      const {data:users}=await DB.from('utilisateurs').select('id').limit(1);
+      if(!users||users.length===0){
+        await DB.from('utilisateurs').insert([
+          {prenom:'Olivier',nom:'FAURE',email:'olivier.gpbc@gmail.com',password_hash:'GPBC2026!',role:'admin',actif:true},
+          {prenom:'Charlotte',nom:'FAURE',email:'charlotte.gpbc@gmail.com',password_hash:'Charlotte2026!',role:'tresoriere',actif:true},
+          {prenom:'Sarah',nom:'HUBERT',email:'sarah.gpbc@gmail.com',password_hash:'Sarah2026!',role:'secretaire',actif:true},
+        ]);
+        console.log('✅ Utilisateurs créés');
+      }
+    }catch(e){}
+    checkAuth();
+  },500);
+});
+</script>
+</body>
+</html>
