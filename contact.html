@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact — GPBC Graveson</title>
+<meta name="description" content="Contacter le Graveson Provence Basket Club : gymnase, e-mail, téléphone et réseaux sociaux.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css">
+<meta property="og:title" content="Contact — GPBC Graveson">
+<meta property="og:image" content="https://www.gpbc-graveson.fr/assets/og.jpg">
+</head>
+<body>
+
+<section class="bandeau">
+  <div class="sur">On se retrouve au gymnase</div>
+  <h1>Contact <span class="g">&amp; accès</span></h1>
+</section>
+
+<main class="page">
+  <div class="grille g2" id="cartes"><p class="vide">Chargement…</p></div>
+  <div class="actions" id="reseaux" style="margin-top:18px"></div>
+</main>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/site.js"></script>
+<script>
+'use strict';
+injecterEntete('contact.html');
+(async () => {
+  const c = await chargerContenus();
+  const cartes = [];
+  cartes.push(`<div class="carte" style="padding:26px">
+    <div style="font-size:30px;margin-bottom:8px">🏟️</div>
+    <h3>Le gymnase</h3>
+    <p class="legende" style="margin-top:8px">${c.adresse_gymnase || 'Adresse à venir'}</p>
+    <div class="actions" style="margin-top:14px">
+      <a class="btn" target="_blank" rel="noopener"
+         href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.adresse_gymnase || 'Gymnase Graveson 13690')}">Itinéraire 📍</a>
+    </div>
+  </div>`);
+  cartes.push(`<div class="carte" style="padding:26px">
+    <div style="font-size:30px;margin-bottom:8px">✉️</div>
+    <h3>Écris-nous</h3>
+    <p class="legende" style="margin-top:8px">
+      ${c.email_contact ? `<a href="mailto:${c.email_contact}">${c.email_contact}</a>` : 'E-mail à venir'}<br>
+      ${c.telephone_contact ? `<a href="tel:${c.telephone_contact.replace(/\s/g, '')}">${c.telephone_contact}</a>` : ''}
+    </p>
+    ${c.email_contact ? `<div class="actions" style="margin-top:14px">
+      <a class="btn btn-plein" href="mailto:${c.email_contact}">Envoyer un e-mail</a></div>` : ''}
+  </div>`);
+  document.getElementById('cartes').innerHTML = cartes.join('');
+
+  const reseaux = [];
+  if(c.lien_facebook) reseaux.push(`<a class="btn" href="${c.lien_facebook}" target="_blank" rel="noopener">Facebook</a>`);
+  if(c.lien_instagram) reseaux.push(`<a class="btn" href="${c.lien_instagram}" target="_blank" rel="noopener">Instagram</a>`);
+  reseaux.push(`<button class="btn btn-or" onclick="partager('GPBC Graveson', 'Le site du Graveson Provence Basket Club — club 100 % féminin 🏀', 'https://www.gpbc-graveson.fr')">Partager le site 🏀</button>`);
+  document.getElementById('reseaux').innerHTML = reseaux.join('');
+})();
+</script>
+</body>
+</html>

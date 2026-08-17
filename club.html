@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Club — GPBC Graveson</title>
+<meta name="description" content="Le Graveson Provence Basket Club : club 100 % féminin en Provence, son histoire, ses valeurs et ses horaires d'entraînement.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css">
+<meta property="og:title" content="Le Club — GPBC Graveson">
+<meta property="og:image" content="https://www.gpbc-graveson.fr/assets/og.jpg">
+</head>
+<body>
+
+<section class="bandeau">
+  <div class="sur">Graveson · Bouches-du-Rhône</div>
+  <h1>Un club <span class="g">100 % féminin</span></h1>
+  <p class="intro" id="presentation">Chargement…</p>
+</section>
+
+<main class="page">
+  <div class="grille g3" id="valeurs"></div>
+
+  <div class="sep">Les entraînements</div>
+  <div class="carte" style="padding:6px 4px;overflow-x:auto">
+    <table class="tableau" id="entrainements">
+      <thead><tr><th>Catégorie</th><th>Jour</th><th>Horaires</th><th>Lieu</th><th>Coach</th></tr></thead>
+      <tbody><tr><td colspan="5" class="vide" style="border:none">Chargement…</td></tr></tbody>
+    </table>
+  </div>
+  <p class="note">Les horaires sont gérés dans l'app Dimanche et toujours à jour ici.</p>
+</main>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/site.js"></script>
+<script>
+'use strict';
+injecterEntete('club.html');
+
+async function charger(){
+  const contenus = await chargerContenus();
+  document.getElementById('presentation').textContent =
+    contenus.club_presentation || 'Présentation à venir.';
+  const valeurs = (contenus.club_valeurs || 'Passion · Famille · Dépassement').split('·').map(v => v.trim()).filter(Boolean);
+  document.getElementById('valeurs').innerHTML = valeurs.map((v, i) => `
+    <div class="carte" style="text-align:center">
+      <div style="font-size:26px;margin-bottom:6px">${['🏀', '❤️', '🔥', '⭐', '🤝'][i % 5]}</div>
+      <h3>${v}</h3>
+    </div>`).join('');
+
+  const { data } = await bdd.from('site_entrainements').select('*');
+  const corps = document.querySelector('#entrainements tbody');
+  const lignes = (data || []).sort((a, b) => (a.jour - b.jour) || String(a.heure_debut).localeCompare(String(b.heure_debut)));
+  corps.innerHTML = lignes.length
+    ? lignes.map(e => `<tr>
+        <td class="cat">${e.categorie || ''}</td>
+        <td>${JOURS[e.jour] || ''}</td>
+        <td>${fmtHeure(e.heure_debut)} – ${fmtHeure(e.heure_fin)}</td>
+        <td>${e.lieu || ''}</td>
+        <td>${e.entraineur || ''}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="vide" style="border:none">Les horaires seront bientôt renseignés dans l\'app Dimanche.</td></tr>';
+}
+charger();
+</script>
+</body>
+</html>

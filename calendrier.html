@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendrier des matchs — GPBC Graveson</title>
+<meta name="description" content="Calendrier et résultats des matchs du Graveson Provence Basket Club — mis à jour en temps réel depuis l'app Dimanche.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css">
+<meta property="og:title" content="Calendrier des matchs — GPBC Graveson">
+<meta property="og:image" content="https://www.gpbc-graveson.fr/assets/og.jpg">
+</head>
+<body>
+
+<section class="bandeau">
+  <div class="sur">Planning officiel · en direct de l'app Dimanche</div>
+  <h1>Calendrier <span class="g">&amp; résultats</span></h1>
+  <p class="intro">Les matchs planifiés dans l'application du club apparaissent ici automatiquement.
+  Partage un match ou génère son affiche en un clic.</p>
+</section>
+
+<main class="page">
+  <div class="filtres" id="filtres"></div>
+
+  <div class="sep">Prochains matchs</div>
+  <div class="grille g2" id="avenir"><p class="vide">Chargement…</p></div>
+
+  <div class="sep">Derniers résultats</div>
+  <div class="grille g2" id="resultats"><p class="vide">Chargement…</p></div>
+</main>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/site.js"></script>
+<script>
+'use strict';
+injecterEntete('calendrier.html');
+
+let tousLesMatchs = [];
+let filtreActif = '';
+
+function carteMatch(m, avecScore){
+  const nous = 'GPBC';
+  const vs = m.domicile === false
+    ? `<span class="eux">${m.adversaire || 'Adversaire'}</span> — ${nous}`
+    : `${nous} — <span class="eux">${m.adversaire || 'Adversaire'}</span>`;
+  let score = '';
+  if(avecScore && m.score_club != null && m.score_adversaire != null){
+    const cl = m.score_club > m.score_adversaire ? 'v' : (m.score_club < m.score_adversaire ? 'd' : '');
+    score = `<div class="match-score"><span class="${cl}">${m.score_club}</span> — ${m.score_adversaire}</div>`;
+  }
+  const infosPartage = `${m.categorie || ''} · GPBC ${m.domicile === false ? 'à ' + (m.lieu || 'l\'extérieur') : 'à domicile'} contre ${m.adversaire || '?'} — ${fmtDate(m.date)}${m.heure ? ' à ' + fmtHeure(m.heure) : ''}`;
+  return `<article class="carte match">
+    <div class="match-haut">
+      <span class="badge cat">${m.categorie || 'Équipe'}</span>
+      <span class="badge ${m.domicile === false ? 'ext' : 'dom'}">${m.domicile === false ? 'Extérieur' : 'Domicile'}</span>
+    </div>
+    <div class="match-vs">${vs}</div>
+    ${score}
+    <div class="match-infos">
+      <span>📅 ${fmtDate(m.date)}</span>
+      ${m.heure ? `<span>🕐 ${fmtHeure(m.heure)}</span>` : ''}
+      ${m.lieu ? `<span>📍 ${m.lieu}</span>` : ''}
+    </div>
+    <div class="actions">
+      <button class="btn" data-partage='${JSON.stringify(infosPartage).replace(/'/g, "&#39;")}'>Partager</button>
+      ${avecScore ? '' : `<button class="btn btn-plein" data-affiche='${JSON.stringify(m).replace(/'/g, "&#39;")}'>Affiche 🏀</button>`}
+    </div>
+  </article>`;
+}
+
+function afficher(){
+  const auj = new Date().toISOString().slice(0, 10);
+  const liste = filtreActif ? tousLesMatchs.filter(m => m.categorie === filtreActif) : tousLesMatchs;
+  const avenir = liste.filter(m => m.date >= auj).sort((a, b) => a.date.localeCompare(b.date) || (a.heure || '').localeCompare(b.heure || ''));
+  const passes = liste.filter(m => m.date < auj).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 12);
+  document.getElementById('avenir').innerHTML =
+    avenir.length ? avenir.map(m => carteMatch(m, false)).join('')
+                  : '<p class="vide">Aucun match programmé pour le moment — le planning se remplit dans l\'app Dimanche.</p>';
+  document.getElementById('resultats').innerHTML =
+    passes.length ? passes.map(m => carteMatch(m, true)).join('')
+                  : '<p class="vide">Pas encore de résultats cette saison.</p>';
+}
+
+async function charger(){
+  const { data, error } = await bdd.from('site_matchs').select('*');
+  if(error){ document.getElementById('avenir').innerHTML = '<p class="vide">Impossible de charger les matchs.</p>'; return; }
+  tousLesMatchs = data || [];
+  // filtres par catégorie
+  const cats = [...new Set(tousLesMatchs.map(m => m.categorie).filter(Boolean))].sort();
+  document.getElementById('filtres').innerHTML =
+    `<button class="filtre actif" data-cat="">Toutes</button>` +
+    cats.map(c => `<button class="filtre" data-cat="${c}">${c}</button>`).join('');
+  document.querySelectorAll('.filtre').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('.filtre').forEach(f => f.classList.remove('actif'));
+    b.classList.add('actif');
+    filtreActif = b.dataset.cat;
+    afficher();
+  }));
+  afficher();
+}
+
+document.addEventListener('click', async e => {
+  const bp = e.target.closest('[data-partage]');
+  if(bp){ partager('GPBC Graveson — match', JSON.parse(bp.dataset.partage), location.href); return; }
+  const ba = e.target.closest('[data-affiche]');
+  if(ba){
+    const m = JSON.parse(ba.dataset.affiche);
+    partagerAffiche({
+      sur: (m.type_competition || 'Match') + ' · ' + (m.categorie || ''),
+      titre1: 'GPBC Graveson',
+      titre2: 'vs ' + (m.adversaire || '?'),
+      badge: m.domicile === false ? 'À l\'extérieur' : 'À domicile',
+      date: fmtDate(m.date),
+      heure: m.heure ? fmtHeure(m.heure) : '',
+      lieu: m.lieu || ''
+    }, 'match-gpbc-' + (m.date || ''));
+  }
+});
+
+charger();
+</script>
+</body>
+</html>

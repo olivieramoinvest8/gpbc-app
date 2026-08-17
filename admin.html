@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin — GPBC Graveson</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<section class="bandeau">
+  <div class="sur">Espace privé du club</div>
+  <h1>Admin <span class="g">du site</span></h1>
+  <p class="intro">Modifie les textes, liens et photos d'équipes. Les matchs, événements et entraînements se gèrent
+  directement dans l'app <b>Dimanche</b> et apparaissent tout seuls sur le site.</p>
+</section>
+
+<main class="page">
+
+  <!-- Connexion -->
+  <div class="carte" id="bloc-connexion" style="max-width:420px">
+    <h3>Connexion</h3>
+    <p class="sous" style="margin:6px 0 16px">Utilise ton compte de l'app Dimanche</p>
+    <div class="champ"><label>E-mail</label><input type="email" id="email" autocomplete="username"></div>
+    <div class="champ"><label>Mot de passe</label><input type="password" id="mdp" autocomplete="current-password"></div>
+    <button class="btn btn-plein" id="btn-connexion">Se connecter</button>
+    <p class="note" id="erreur-connexion" style="color:var(--rouge);display:none"></p>
+  </div>
+
+  <!-- Espace admin -->
+  <div id="bloc-admin" style="display:none">
+    <div class="actions" style="justify-content:flex-end">
+      <button class="btn" id="btn-deconnexion">Se déconnecter</button>
+    </div>
+
+    <div class="sep">Textes &amp; liens du site</div>
+    <div class="grille g2" id="contenus"></div>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn btn-or" id="btn-sauver-contenus">💾 Enregistrer les textes</button>
+    </div>
+
+    <div class="sep">Photos d'équipes</div>
+    <div class="carte" style="margin-bottom:16px">
+      <h3>Ajouter une équipe</h3>
+      <div class="grille g2" style="margin-top:12px">
+        <div class="champ"><label>Saison</label><input id="eq-saison" placeholder="2026-2027"></div>
+        <div class="champ"><label>Catégorie</label><input id="eq-categorie" placeholder="U13, Seniors…"></div>
+        <div class="champ"><label>Nom (optionnel)</label><input id="eq-nom" placeholder="Les Aigles"></div>
+        <div class="champ"><label>Photo</label><input type="file" id="eq-photo" accept="image/*"></div>
+      </div>
+      <div class="champ"><label>Légende</label><input id="eq-legende" placeholder="Coach : … · Championnes de …"></div>
+      <button class="btn btn-plein" id="btn-ajouter-equipe">➕ Ajouter l'équipe</button>
+    </div>
+    <div class="grille g3" id="liste-equipes"></div>
+  </div>
+</main>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/site.js"></script>
+<script>
+'use strict';
+injecterEntete('');
+
+const LIBELLES = {
+  club_presentation: 'Présentation du club (page Le Club)',
+  club_valeurs: 'Valeurs (séparées par des ·)',
+  adresse_gymnase: 'Adresse du gymnase',
+  email_contact: 'E-mail de contact',
+  telephone_contact: 'Téléphone',
+  lien_helloasso: 'Lien HelloAsso (inscriptions)',
+  lien_facebook: 'Lien Facebook',
+  lien_instagram: 'Lien Instagram',
+  saison_affichee: 'Saison affichée par défaut',
+  inscription_texte: 'Texte de la page Inscription',
+};
+
+async function majAffichage(){
+  const { data: { session } } = await bdd.auth.getSession();
+  document.getElementById('bloc-connexion').style.display = session ? 'none' : 'block';
+  document.getElementById('bloc-admin').style.display = session ? 'block' : 'none';
+  if(session) chargerAdmin();
+}
+
+document.getElementById('btn-connexion').addEventListener('click', async () => {
+  const err = document.getElementById('erreur-connexion');
+  err.style.display = 'none';
+  const { error } = await bdd.auth.signInWithPassword({
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('mdp').value,
+  });
+  if(error){
+    err.textContent = 'Connexion impossible : vérifie l\'e-mail et le mot de passe.';
+    err.style.display = 'block';
+    return;
+  }
+  majAffichage();
+});
+document.getElementById('btn-deconnexion').addEventListener('click', async () => {
+  await bdd.auth.signOut();
+  majAffichage();
+});
+
+// ---- Textes & liens ----
+async function chargerAdmin(){
+  const { data } = await bdd.from('site_contenus').select('*').order('cle');
+  document.getElementById('contenus').innerHTML = (data || []).map(l => `
+    <div class="champ carte" style="margin:0">
+      <label>${LIBELLES[l.cle] || l.cle}</label>
+      ${(l.valeur || '').length > 80 || l.cle.includes('presentation') || l.cle.includes('texte')
+        ? `<textarea data-cle="${l.cle}">${l.valeur || ''}</textarea>`
+        : `<input data-cle="${l.cle}" value="${(l.valeur || '').replace(/"/g, '&quot;')}">`}
+    </div>`).join('');
+  chargerEquipes();
+}
+
+document.getElementById('btn-sauver-contenus').addEventListener('click', async () => {
+  const lignes = [...document.querySelectorAll('#contenus [data-cle]')]
+    .map(el => ({cle: el.dataset.cle, valeur: el.value, maj: new Date().toISOString()}));
+  const { error } = await bdd.from('site_contenus').upsert(lignes);
+  toast(error ? 'Erreur lors de l\'enregistrement.' : '✅ Textes enregistrés — le site est à jour.');
+});
+
+// ---- Équipes ----
+async function chargerEquipes(){
+  const { data } = await bdd.from('site_equipes').select('*')
+    .order('saison', {ascending: false}).order('ordre');
+  document.getElementById('liste-equipes').innerHTML = (data || []).map(e => `
+    <div class="carte equipe">
+      ${e.photo_url ? `<img src="${e.photo_url}" alt="">` : ''}
+      <div class="corps">
+        <h3>${e.categorie}</h3>
+        <div class="sous">Saison ${e.saison}</div>
+        ${e.legende ? `<p class="legende">${e.legende}</p>` : ''}
+        <div class="actions" style="margin-top:10px">
+          <button class="btn" data-suppr="${e.id}">🗑️ Supprimer</button>
+        </div>
+      </div>
+    </div>`).join('') || '<p class="vide">Aucune équipe pour le moment.</p>';
+}
+
+document.getElementById('btn-ajouter-equipe').addEventListener('click', async () => {
+  const saison = document.getElementById('eq-saison').value.trim();
+  const categorie = document.getElementById('eq-categorie').value.trim();
+  if(!saison || !categorie){ toast('Renseigne au moins la saison et la catégorie.'); return; }
+  let photo_url = null;
+  const fichier = document.getElementById('eq-photo').files[0];
+  if(fichier){
+    toast('Envoi de la photo…');
+    const chemin = `equipes/${saison}/${Date.now()}-${fichier.name.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
+    const { error: errUp } = await bdd.storage.from('site-public').upload(chemin, fichier);
+    if(errUp){ toast('Échec de l\'envoi de la photo.'); return; }
+    photo_url = bdd.storage.from('site-public').getPublicUrl(chemin).data.publicUrl;
+  }
+  const { error } = await bdd.from('site_equipes').insert({
+    saison, categorie,
+    nom: document.getElementById('eq-nom').value.trim() || null,
+    legende: document.getElementById('eq-legende').value.trim() || null,
+    photo_url,
+  });
+  if(error){ toast('Erreur lors de l\'ajout.'); return; }
+  toast('✅ Équipe ajoutée !');
+  ['eq-categorie', 'eq-nom', 'eq-legende'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('eq-photo').value = '';
+  chargerEquipes();
+});
+
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-suppr]');
+  if(!b) return;
+  if(!confirm('Supprimer cette équipe du site ?')) return;
+  await bdd.from('site_equipes').delete().eq('id', b.dataset.suppr);
+  chargerEquipes();
+});
+
+majAffichage();
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Événements — GPBC Graveson</title>
+<meta name="description" content="Tournois, lotos, stages et vie du Graveson Provence Basket Club — en direct de l'app Dimanche.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css">
+<meta property="og:title" content="Événements — GPBC Graveson">
+<meta property="og:image" content="https://www.gpbc-graveson.fr/assets/og.jpg">
+</head>
+<body>
+
+<section class="bandeau">
+  <div class="sur">La vie du club · en direct de l'app Dimanche</div>
+  <h1>Événements <span class="g">&amp; rendez-vous</span></h1>
+  <p class="intro">Tournois, lotos, stages, assemblées… Tout ce qui fait vivre le club, mis à jour automatiquement.</p>
+</section>
+
+<main class="page">
+  <div class="sep">À venir</div>
+  <div class="grille g2" id="avenir"><p class="vide">Chargement…</p></div>
+  <div class="sep">Passés récemment</div>
+  <div class="grille g2" id="passes"><p class="vide">Chargement…</p></div>
+</main>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/site.js"></script>
+<script>
+'use strict';
+injecterEntete('evenements.html');
+
+function carteEvt(ev, passe){
+  const partage = `${ev.titre} — ${fmtDate(ev.date)}${ev.heure ? ' à ' + fmtHeure(ev.heure) : ''}${ev.lieu ? ', ' + ev.lieu : ''}`;
+  return `<article class="carte match">
+    <div class="match-haut">
+      <span class="badge cat">${ev.type || 'Événement'}</span>
+      ${ev.inscription_ouverte && !passe ? '<span class="badge dom">Inscriptions ouvertes</span>' : ''}
+    </div>
+    <div class="match-vs">${ev.titre || ''}</div>
+    <div class="match-infos">
+      <span>📅 ${fmtDate(ev.date)}${ev.date_fin && ev.date_fin !== ev.date ? ' → ' + fmtDate(ev.date_fin) : ''}</span>
+      ${ev.heure ? `<span>🕐 ${fmtHeure(ev.heure)}${ev.heure_fin ? ' – ' + fmtHeure(ev.heure_fin) : ''}</span>` : ''}
+      ${ev.lieu ? `<span>📍 ${ev.lieu}</span>` : ''}
+      ${ev.prix ? `<span>💶 ${ev.prix} €</span>` : ''}
+    </div>
+    ${ev.description ? `<p style="font-size:13.5px;color:var(--craie2);line-height:1.55">${ev.description}</p>` : ''}
+    ${passe ? '' : `<div class="actions">
+      <button class="btn" data-partage='${JSON.stringify(partage).replace(/'/g, "&#39;")}'>Partager</button>
+      <button class="btn btn-plein" data-affiche='${JSON.stringify(ev).replace(/'/g, "&#39;")}'>Affiche 🏀</button>
+    </div>`}
+  </article>`;
+}
+
+async function charger(){
+  const { data, error } = await bdd.from('site_evenements').select('*');
+  if(error){ document.getElementById('avenir').innerHTML = '<p class="vide">Impossible de charger les événements.</p>'; return; }
+  const auj = new Date().toISOString().slice(0, 10);
+  const evts = data || [];
+  const avenir = evts.filter(e => (e.date_fin || e.date) >= auj).sort((a, b) => a.date.localeCompare(b.date));
+  const passes = evts.filter(e => (e.date_fin || e.date) < auj).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6);
+  document.getElementById('avenir').innerHTML =
+    avenir.length ? avenir.map(e => carteEvt(e, false)).join('')
+                  : '<p class="vide">Aucun événement annoncé pour le moment.</p>';
+  document.getElementById('passes').innerHTML =
+    passes.length ? passes.map(e => carteEvt(e, true)).join('')
+                  : '<p class="vide">Rien pour l\'instant.</p>';
+}
+
+document.addEventListener('click', e => {
+  const bp = e.target.closest('[data-partage]');
+  if(bp){ partager('GPBC Graveson — événement', JSON.parse(bp.dataset.partage), location.href); return; }
+  const ba = e.target.closest('[data-affiche]');
+  if(ba){
+    const ev = JSON.parse(ba.dataset.affiche);
+    partagerAffiche({
+      sur: ev.type || 'Événement du club',
+      titre1: ev.titre || 'Événement',
+      titre2: 'GPBC Graveson',
+      badge: ev.inscription_ouverte ? 'Inscriptions ouvertes' : '',
+      date: fmtDate(ev.date),
+      heure: ev.heure ? fmtHeure(ev.heure) : '',
+      lieu: ev.lieu || ''
+    }, 'evenement-gpbc-' + (ev.date || ''));
+  }
+});
+
+charger();
+</script>
+</body>
+</html>
