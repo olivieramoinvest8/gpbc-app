@@ -1,9 +1,16 @@
 // Configuration Cloudflare (hébergement statique du site GPBC)
 {
-  "name": "sitegpbc",
+  "name": "gpbc-app",
   "compatibility_date": "2026-01-01",
   "assets": {
     "directory": ".",
     "not_found_handling": "404-page"
-  }
+  },
+  // Adresse de test fournie par Cloudflare (xxx.workers.dev)
+  "workers_dev": true,
+  // Le domaine du club, attaché automatiquement à chaque déploiement
+  "routes": [
+    { "pattern": "gpbc-graveson.fr", "custom_domain": true },
+    { "pattern": "www.gpbc-graveson.fr", "custom_domain": true }
+  ]
 }
