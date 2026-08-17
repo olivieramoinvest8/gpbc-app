@@ -1,0 +1,135 @@
+/* ============================================================
+   GPBC — styles des pages de contenu (ambiance "soir de match")
+   ============================================================ */
+@font-face{font-family:'Anton';font-style:normal;font-weight:400;font-display:swap;
+  src:url(fonts/anton.woff2) format('woff2')}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:400;font-display:swap;
+  src:url(fonts/oswald-400.woff2) format('woff2')}
+@font-face{font-family:'Oswald';font-style:normal;font-weight:600;font-display:swap;
+  src:url(fonts/oswald-600.woff2) format('woff2')}
+
+:root{
+  --nuit:#0A0807; --nuit2:#141110; --nuit3:#1C1815;
+  --rouge:#D8232A; --rouge-s:#8E1418;
+  --or:#FFC907; --or-s:#B8930A;
+  --craie:#F2EDE4; --craie2:#B0A99C; --craie3:#6E685E;
+  --brd:#2C2622;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--nuit);color:var(--craie);font-family:'Oswald',system-ui,sans-serif;
+  min-height:100vh;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(ellipse 90% 50% at 50% -10%,#1D130A 0%,transparent 60%)}
+a{color:inherit}
+
+/* ---- En-tête commun ---- */
+.entete{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:16px 26px;border-bottom:1px solid var(--brd);flex-wrap:wrap;
+  position:sticky;top:0;background:rgba(10,8,7,.92);backdrop-filter:blur(8px);z-index:50}
+.marque{display:flex;align-items:center;gap:12px;text-decoration:none}
+.marque img{width:44px;height:44px}
+.marque-nom{font-family:'Anton',Impact,sans-serif;font-size:19px;letter-spacing:.06em;line-height:1}
+.marque-nom em{font-style:normal;color:var(--or)}
+.marque-sub{font-size:9.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--craie2);margin-top:3px}
+.nav{display:flex;gap:4px;flex-wrap:wrap}
+.nav a{text-decoration:none;font-size:12.5px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--craie2);padding:9px 13px;border-radius:8px;
+  transition:color .2s,background .2s}
+.nav a:hover{color:var(--craie);background:var(--nuit3)}
+.nav a.actif{color:var(--or)}
+
+/* ---- Bandeau de page ---- */
+.bandeau{max-width:1060px;margin:0 auto;padding:46px 24px 8px}
+.bandeau .sur{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--rouge);font-weight:600}
+.bandeau h1{font-family:'Anton',Impact,sans-serif;font-size:clamp(34px,5vw,54px);
+  letter-spacing:.04em;text-transform:uppercase;line-height:1;margin-top:8px;text-wrap:balance}
+.bandeau h1 .g{color:var(--or)}
+.bandeau .intro{margin-top:14px;max-width:64ch;color:var(--craie2);font-size:15.5px;line-height:1.65}
+
+/* ---- Contenu ---- */
+.page{max-width:1060px;margin:0 auto;padding:28px 24px 70px}
+.grille{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+
+.carte{background:var(--nuit2);border:1px solid var(--brd);border-radius:14px;padding:18px}
+.carte h3{font-family:'Anton',Impact,sans-serif;font-size:17px;letter-spacing:.06em;text-transform:uppercase}
+.carte .sous{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--craie2)}
+
+/* ---- Matchs ---- */
+.match{display:flex;flex-direction:column;gap:10px}
+.match-haut{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.badge{font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  padding:4px 10px;border-radius:999px;border:1px solid var(--brd);color:var(--craie2)}
+.badge.dom{border-color:var(--or-s);color:var(--or)}
+.badge.ext{border-color:#3A3430}
+.badge.cat{background:var(--rouge);border-color:var(--rouge);color:#fff}
+.match-vs{font-family:'Anton',Impact,sans-serif;font-size:20px;letter-spacing:.04em;
+  text-transform:uppercase;line-height:1.15}
+.match-vs .eux{color:var(--craie2)}
+.match-infos{font-size:13px;color:var(--craie2);display:flex;gap:14px;flex-wrap:wrap}
+.match-score{font-family:'Anton',Impact,sans-serif;font-size:26px;letter-spacing:.05em}
+.match-score .v{color:#5DBB63}.match-score .d{color:var(--rouge)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:2px}
+
+/* ---- Boutons ---- */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:9px;
+  font-family:'Oswald';font-size:12.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
+  cursor:pointer;text-decoration:none;border:1px solid var(--brd);background:var(--nuit3);
+  color:var(--craie);transition:all .2s}
+.btn:hover{border-color:var(--or);color:var(--or)}
+.btn-plein{background:var(--rouge);border-color:var(--rouge);color:#fff}
+.btn-plein:hover{background:#B41B21;border-color:#B41B21;color:#fff}
+.btn-or{background:var(--or);border-color:var(--or);color:#181206}
+.btn-or:hover{background:#E5B500;border-color:#E5B500;color:#181206}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---- Équipes ---- */
+.equipe{overflow:hidden;padding:0}
+.equipe img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:var(--nuit3)}
+.equipe .corps{padding:14px 16px 16px}
+.equipe .legende{font-size:13px;color:var(--craie2);margin-top:6px;line-height:1.5}
+
+/* ---- Tableaux (entraînements) ---- */
+.tableau{width:100%;border-collapse:collapse;font-size:14px}
+.tableau th{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--craie3);
+  text-align:left;padding:10px 12px;border-bottom:1px solid var(--brd)}
+.tableau td{padding:11px 12px;border-bottom:1px solid #201B17}
+.tableau tr:last-child td{border-bottom:none}
+.tableau .cat{font-weight:600;color:var(--or)}
+
+/* ---- Divers ---- */
+.vide{color:var(--craie3);font-size:14px;padding:26px;text-align:center;border:1px dashed var(--brd);border-radius:12px}
+.note{font-size:12.5px;color:var(--craie3);margin-top:18px;line-height:1.6}
+.filtres{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 18px}
+.filtre{padding:7px 14px;border-radius:999px;border:1px solid var(--brd);background:none;
+  color:var(--craie2);font-family:'Oswald';font-size:12px;font-weight:600;letter-spacing:.1em;
+  text-transform:uppercase;cursor:pointer}
+.filtre.actif{border-color:var(--or);color:var(--or)}
+.sep{font-family:'Anton',Impact,sans-serif;font-size:15px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--rouge);margin:34px 0 14px;display:flex;align-items:center;gap:12px}
+.sep::after{content:'';flex:1;height:1px;background:var(--brd)}
+
+/* ---- Pied ---- */
+.pied{border-top:1px solid var(--brd);padding:26px;text-align:center;font-size:12px;color:var(--craie3)}
+.pied a{color:var(--craie2)}
+
+/* ---- Toast ---- */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);
+  background:#181410;border:1px solid var(--or);color:var(--craie);border-radius:12px;
+  padding:12px 20px;font-size:14px;opacity:0;transition:.3s;z-index:90;pointer-events:none;max-width:88vw}
+.toast.on{opacity:1;transform:translateX(-50%)}
+
+/* ---- Admin ---- */
+.champ{margin-bottom:14px}
+.champ label{display:block;font-size:11px;font-weight:600;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--craie2);margin-bottom:5px}
+.champ input,.champ textarea,.champ select{width:100%;padding:10px 12px;border:1px solid var(--brd);
+  border-radius:9px;background:var(--nuit);color:var(--craie);font-family:'Oswald';font-size:14px}
+.champ input:focus,.champ textarea:focus,.champ select:focus{outline:none;border-color:var(--or)}
+.champ textarea{min-height:90px;resize:vertical}
+
+@media (max-width:700px){
+  .entete{padding:12px 14px}
+  .nav a{padding:8px 9px;font-size:11.5px}
+  .bandeau{padding-top:30px}
+}

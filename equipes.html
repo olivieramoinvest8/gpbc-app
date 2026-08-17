@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nos Équipes — GPBC Graveson</title>
+<meta name="description" content="Les équipes du Graveson Provence Basket Club, de U5 aux Seniors — photos et présentation par saison.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css">
+<meta property="og:title" content="Nos Équipes — GPBC Graveson">
+<meta property="og:image" content="https://www.gpbc-graveson.fr/assets/og.jpg">
+</head>
+<body>
+
+<section class="bandeau">
+  <div class="sur">De U5 aux Seniors</div>
+  <h1>Nos <span class="g">équipes</span></h1>
+  <p class="intro">Les photos et présentations de chaque équipe, saison par saison — ajoutées par le club depuis l'espace admin.</p>
+</section>
+
+<main class="page">
+  <div class="filtres" id="saisons"></div>
+  <div class="grille g3" id="equipes"><p class="vide">Chargement…</p></div>
+</main>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/site.js"></script>
+<script>
+'use strict';
+injecterEntete('equipes.html');
+
+let toutes = [];
+let saisonActive = '';
+
+function afficher(){
+  const liste = toutes.filter(e => e.saison === saisonActive)
+    .sort((a, b) => (a.ordre - b.ordre) || String(a.categorie).localeCompare(String(b.categorie)));
+  document.getElementById('equipes').innerHTML = liste.length
+    ? liste.map(e => `<article class="carte equipe">
+        ${e.photo_url
+          ? `<img src="${e.photo_url}" alt="Équipe ${e.categorie}" loading="lazy">`
+          : `<div style="aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;font-size:44px;background:var(--nuit3)">🏀</div>`}
+        <div class="corps">
+          <h3>${e.categorie || ''}</h3>
+          ${e.nom ? `<div class="sous">${e.nom}</div>` : ''}
+          ${e.legende ? `<p class="legende">${e.legende}</p>` : ''}
+        </div>
+      </article>`).join('')
+    : `<p class="vide">Aucune équipe renseignée pour la saison ${saisonActive}.<br>Ajoute-les depuis la page Admin — photo, nom et légende.</p>`;
+}
+
+async function charger(){
+  const contenus = await chargerContenus();
+  const { data } = await bdd.from('site_equipes').select('*');
+  toutes = data || [];
+  const saisons = [...new Set(toutes.map(e => e.saison))].sort().reverse();
+  saisonActive = contenus.saison_affichee && saisons.includes(contenus.saison_affichee)
+    ? contenus.saison_affichee : (saisons[0] || contenus.saison_affichee || '2026-2027');
+  if(!saisons.includes(saisonActive)) saisons.unshift(saisonActive);
+  document.getElementById('saisons').innerHTML =
+    saisons.map(s => `<button class="filtre ${s === saisonActive ? 'actif' : ''}" data-s="${s}">Saison ${s}</button>`).join('');
+  document.querySelectorAll('#saisons .filtre').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#saisons .filtre').forEach(f => f.classList.remove('actif'));
+    b.classList.add('actif');
+    saisonActive = b.dataset.s;
+    afficher();
+  }));
+  afficher();
+}
+charger();
+</script>
+</body>
+</html>

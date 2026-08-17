@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inscription — GPBC Graveson</title>
+<meta name="description" content="Rejoindre le Graveson Provence Basket Club : inscriptions en ligne pour la saison, de U5 aux Seniors.">
+<link rel="icon" href="assets/logo.png">
+<link rel="stylesheet" href="assets/style.css">
+<meta property="og:title" content="Inscription — GPBC Graveson">
+<meta property="og:image" content="https://www.gpbc-graveson.fr/assets/og.jpg">
+</head>
+<body>
+
+<section class="bandeau">
+  <div class="sur">Rejoindre le club</div>
+  <h1>Inscription <span class="g">saison <span id="saison"></span></span></h1>
+  <p class="intro" id="texte">Chargement…</p>
+</section>
+
+<main class="page">
+  <div class="grille g2">
+    <div class="carte" style="text-align:center;padding:30px">
+      <div style="font-size:40px;margin-bottom:10px">📝</div>
+      <h3>Inscription en ligne</h3>
+      <p class="legende" style="margin:10px 0 18px">Simple et sécurisée via HelloAsso.</p>
+      <a class="btn btn-or" id="btn-helloasso" href="#" target="_blank" rel="noopener">S'inscrire sur HelloAsso</a>
+      <p class="note" id="note-helloasso" style="display:none">Le lien HelloAsso sera bientôt disponible — en attendant, contacte-nous !</p>
+    </div>
+    <div class="carte" style="padding:30px">
+      <h3>Ce qu'il te faut</h3>
+      <ul style="margin-top:12px;padding-left:20px;color:var(--craie2);line-height:2">
+        <li>Le formulaire d'inscription rempli</li>
+        <li>Un certificat médical ou questionnaire santé</li>
+        <li>Une photo d'identité</li>
+        <li>Le règlement de la licence</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note">Une question sur les tarifs ou les catégories ? Passe par la page <a href="contact.html">Contact</a> — on te répond vite.</p>
+</main>
+
+<script src="assets/supabase.js"></script>
+<script src="assets/site.js"></script>
+<script>
+'use strict';
+injecterEntete('inscription.html');
+(async () => {
+  const contenus = await chargerContenus();
+  document.getElementById('saison').textContent = contenus.saison_affichee || '';
+  document.getElementById('texte').textContent = contenus.inscription_texte || '';
+  const btn = document.getElementById('btn-helloasso');
+  if(contenus.lien_helloasso){
+    btn.href = contenus.lien_helloasso;
+  }else{
+    btn.style.opacity = .45; btn.style.pointerEvents = 'none';
+    document.getElementById('note-helloasso').style.display = 'block';
+  }
+})();
+</script>
+</body>
+</html>
