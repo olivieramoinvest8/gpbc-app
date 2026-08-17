@@ -1,0 +1,9 @@
+// Configuration Cloudflare (hébergement statique du site GPBC)
+{
+  "name": "sitegpbc",
+  "compatibility_date": "2026-01-01",
+  "assets": {
+    "directory": ".",
+    "not_found_handling": "404-page"
+  }
+}
