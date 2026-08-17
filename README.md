@@ -16,7 +16,9 @@ Site officiel du club : **www.gpbc-graveson.fr** — club de basket 100 % fémin
 
 ## Déploiement
 
-Hébergé sur Netlify (dossier racine, aucun build). Domaine : `www.gpbc-graveson.fr`.
+Hébergé sur **Cloudflare** (site statique, aucun build), relié au dépôt GitHub :
+chaque fusion sur `main` met le site en ligne automatiquement.
+Domaine : `www.gpbc-graveson.fr` (zone DNS gérée dans le même compte Cloudflare).
 
 ## Crédits
 
