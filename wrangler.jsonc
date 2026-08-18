@@ -7,10 +7,7 @@
     "not_found_handling": "404-page"
   },
   // Adresse de test fournie par Cloudflare (xxx.workers.dev)
-  "workers_dev": true,
-  // Le domaine du club, attaché automatiquement à chaque déploiement
-  "routes": [
-    { "pattern": "gpbc-graveson.fr", "custom_domain": true },
-    { "pattern": "www.gpbc-graveson.fr", "custom_domain": true }
-  ]
+  "workers_dev": true
+  // Le domaine gpbc-graveson.fr est rattaché via le tableau de bord Cloudflare
+  // (Worker > Settings > Domains & Routes > Add > Custom Domain)
 }
