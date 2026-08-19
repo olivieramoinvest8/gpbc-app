@@ -48,7 +48,6 @@ function carteEvt(ev, passe){
     ${ev.description ? `<p style="font-size:13.5px;color:var(--craie2);line-height:1.55">${ev.description}</p>` : ''}
     ${passe ? '' : `<div class="actions">
       <button class="btn" data-partage='${JSON.stringify(partage).replace(/'/g, "&#39;")}'>Partager</button>
-      <button class="btn btn-plein" data-affiche='${JSON.stringify(ev).replace(/'/g, "&#39;")}'>Affiche 🏀</button>
     </div>`}
   </article>`;
 }
@@ -70,20 +69,7 @@ async function charger(){
 
 document.addEventListener('click', e => {
   const bp = e.target.closest('[data-partage]');
-  if(bp){ partager('GPBC Graveson — événement', JSON.parse(bp.dataset.partage), location.href); return; }
-  const ba = e.target.closest('[data-affiche]');
-  if(ba){
-    const ev = JSON.parse(ba.dataset.affiche);
-    partagerAffiche({
-      sur: ev.type || 'Événement du club',
-      titre1: ev.titre || 'Événement',
-      titre2: 'GPBC Graveson',
-      badge: ev.inscription_ouverte ? 'Inscriptions ouvertes' : '',
-      date: fmtDate(ev.date),
-      heure: ev.heure ? fmtHeure(ev.heure) : '',
-      lieu: ev.lieu || ''
-    }, 'evenement-gpbc-' + (ev.date || ''));
-  }
+  if(bp) partager('GPBC Graveson — événement', JSON.parse(bp.dataset.partage), location.href);
 });
 
 charger();

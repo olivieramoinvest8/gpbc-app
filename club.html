@@ -21,12 +21,9 @@
 <main class="page">
   <div class="grille g3" id="valeurs"></div>
 
-  <div class="sep">Les entraînements</div>
-  <div class="carte" style="padding:6px 4px;overflow-x:auto">
-    <table class="tableau" id="entrainements">
-      <thead><tr><th>Catégorie</th><th>Jour</th><th>Horaires</th><th>Lieu</th><th>Coach</th></tr></thead>
-      <tbody><tr><td colspan="5" class="vide" style="border:none">Chargement…</td></tr></tbody>
-    </table>
+  <div class="sep">Planning des entraînements</div>
+  <div class="carte" style="padding:12px;overflow-x:auto" id="planning">
+    <p class="vide" style="border:none">Chargement…</p>
   </div>
   <p class="note">Les horaires sont gérés dans l'app Dimanche et toujours à jour ici.</p>
 </main>
@@ -48,18 +45,45 @@ async function charger(){
       <h3>${v}</h3>
     </div>`).join('');
 
+  // Planning en grille (comme la vue "impression" de l'app Dimanche) :
+  // une ligne par catégorie, une colonne par jour, les séances dans les cases.
   const { data } = await bdd.from('site_entrainements').select('*');
-  const corps = document.querySelector('#entrainements tbody');
-  const lignes = (data || []).sort((a, b) => (a.jour - b.jour) || String(a.heure_debut).localeCompare(String(b.heure_debut)));
-  corps.innerHTML = lignes.length
-    ? lignes.map(e => `<tr>
-        <td class="cat">${e.categorie || ''}</td>
-        <td>${JOURS[e.jour] || ''}</td>
-        <td>${fmtHeure(e.heure_debut)} – ${fmtHeure(e.heure_fin)}</td>
-        <td>${e.lieu || ''}</td>
-        <td>${e.entraineur || ''}</td>
-      </tr>`).join('')
-    : '<tr><td colspan="5" class="vide" style="border:none">Les horaires seront bientôt renseignés dans l\'app Dimanche.</td></tr>';
+  const seances = data || [];
+  const zone = document.getElementById('planning');
+  if(!seances.length){
+    zone.innerHTML = '<p class="vide" style="border:none">Les horaires seront bientôt renseignés dans l\'app Dimanche.</p>';
+    return;
+  }
+
+  // Jours ayant au moins une séance (1 = Lundi … 7 = Dimanche), dans l'ordre de la semaine
+  const jours = [...new Set(seances.map(s => s.jour))].sort((a, b) => a - b);
+  // Catégories triées par âge : U7 avant U9 avant U11… puis les Seniors à la fin
+  const poidsCategorie = c => { const m = /^u\s*(\d+)/i.exec(c || ''); return m ? +m[1] : 999; };
+  const categories = [...new Set(seances.map(s => s.categorie || ''))]
+    .sort((a, b) => (poidsCategorie(a) - poidsCategorie(b)) || a.localeCompare(b, 'fr'));
+
+  const caseSeances = (cat, jour) => {
+    const liste = seances
+      .filter(s => (s.categorie || '') === cat && s.jour === jour)
+      .sort((a, b) => String(a.heure_debut).localeCompare(String(b.heure_debut)));
+    if(!liste.length) return '<td class="off"></td>';
+    return '<td>' + liste.map(s => `
+      <div class="seance">
+        <b>${fmtHeure(s.heure_debut)} – ${fmtHeure(s.heure_fin)}</b>
+        ${s.lieu ? `<span>📍 ${s.lieu}</span>` : ''}
+        ${s.entraineur ? `<span>👤 ${s.entraineur}</span>` : ''}
+      </div>`).join('') + '</td>';
+  };
+
+  zone.innerHTML = `<table class="planning">
+    <thead><tr><th></th>${jours.map(j => `<th>${JOURS[j] || ''}</th>`).join('')}</tr></thead>
+    <tbody>${categories.map(cat => `
+      <tr>
+        <th class="pcat"><span>${cat}</span></th>
+        ${jours.map(j => caseSeances(cat, j)).join('')}
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
 }
 charger();
 </script>

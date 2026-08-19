@@ -26,7 +26,8 @@ club.html         Présentation, valeurs, horaires (lit site_entrainements)
 equipes.html      Photos d'équipes par saison (lit/gère site_equipes)
 calendrier.html   Matchs en direct de Dimanche (site_matchs) + partage + affiches
 evenements.html   Événements du club (site_evenements) + partage + affiches
-inscription.html  Lien HelloAsso (site_contenus)
+inscription.html  Bouton d'inscription en ligne via l'app Dimanche (lien codé en dur,
+                  club b52842ca-0945-48ea-81d8-eb26b3081c86) — HelloAsso abandonné
 contact.html      Adresse, e-mail, réseaux sociaux (site_contenus)
 admin.html        Espace privé (connexion compte Dimanche) pour éditer textes/liens/photos
 assets/           style.css, site.js (connexion Supabase), polices, logo, aigle,
@@ -91,8 +92,9 @@ Migration appliquée : `site_gpbc_vues_publiques_et_contenus`
 
 1. Remplir le contenu réel dans `site_contenus` (via `/admin.html` ou
    directement en base) : e-mail de contact réel, téléphone, adresse précise
-   du gymnase, **lien HelloAsso** (actuellement vide → bouton désactivé sur
-   `inscription.html`), liens Facebook/Instagram.
+   du gymnase, liens Facebook/Instagram. (L'inscription passe désormais par
+   le lien Dimanche codé en dur dans `inscription.html` — la clé
+   `lien_helloasso` en base ne sert plus.)
 2. Ajouter les photos d'équipes de la saison en cours via `/admin.html`.
 3. Vérifier que `site_matchs` / `site_evenements` / `site_entrainements` se
    peuplent bien à mesure qu'Olivier les saisit dans Dimanche (testé
