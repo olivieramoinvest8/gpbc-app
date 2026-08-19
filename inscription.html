@@ -23,9 +23,8 @@
     <div class="carte" style="text-align:center;padding:30px">
       <div style="font-size:40px;margin-bottom:10px">📝</div>
       <h3>Inscription en ligne</h3>
-      <p class="legende" style="margin:10px 0 18px">Simple et sécurisée via HelloAsso.</p>
-      <a class="btn btn-or" id="btn-helloasso" href="#" target="_blank" rel="noopener">S'inscrire sur HelloAsso</a>
-      <p class="note" id="note-helloasso" style="display:none">Le lien HelloAsso sera bientôt disponible — en attendant, contacte-nous !</p>
+      <p class="legende" style="margin:10px 0 18px">Simple et rapide, directement dans l'app du club.</p>
+      <a class="btn btn-or" href="https://dimanche-association.fr/inscription?club=b52842ca-0945-48ea-81d8-eb26b3081c86" target="_blank" rel="noopener">Je m'inscris 🏀</a>
     </div>
     <div class="carte" style="padding:30px">
       <h3>Ce qu'il te faut</h3>
@@ -48,14 +47,8 @@ injecterEntete('inscription.html');
 (async () => {
   const contenus = await chargerContenus();
   document.getElementById('saison').textContent = contenus.saison_affichee || '';
-  document.getElementById('texte').textContent = contenus.inscription_texte || '';
-  const btn = document.getElementById('btn-helloasso');
-  if(contenus.lien_helloasso){
-    btn.href = contenus.lien_helloasso;
-  }else{
-    btn.style.opacity = .45; btn.style.pointerEvents = 'none';
-    document.getElementById('note-helloasso').style.display = 'block';
-  }
+  document.getElementById('texte').textContent = contenus.inscription_texte ||
+    'Les inscriptions se font en ligne, en quelques minutes.';
 })();
 </script>
 </body>

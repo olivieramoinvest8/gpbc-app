@@ -156,6 +156,9 @@ function injecterEntete(actif){
     ['club.html', 'Le Club'], ['equipes.html', 'Équipes'], ['calendrier.html', 'Calendrier'],
     ['evenements.html', 'Événements'], ['inscription.html', 'Inscription'], ['contact.html', 'Contact'],
   ];
+  // Logo du club en filigrane (grand, discret, en bas à gauche) sur toutes les pages hors accueil
+  document.body.insertAdjacentHTML('afterbegin',
+    '<img class="filigrane" src="assets/logo.png" alt="" aria-hidden="true">');
   document.body.insertAdjacentHTML('afterbegin', `
   <header class="entete">
     <a class="marque" href="index.html">

@@ -45,6 +45,10 @@ a{color:inherit}
 .bandeau h1 .g{color:var(--or)}
 .bandeau .intro{margin-top:14px;max-width:64ch;color:var(--craie2);font-size:15.5px;line-height:1.65}
 
+/* ---- Filigrane (logo géant en bas à gauche, ne gêne pas la lecture) ---- */
+.filigrane{position:fixed;left:-70px;bottom:-70px;width:min(72vw,560px);
+  opacity:.06;z-index:-1;pointer-events:none;user-select:none}
+
 /* ---- Contenu ---- */
 .page{max-width:1060px;margin:0 auto;padding:28px 24px 70px}
 .grille{display:grid;gap:14px}
@@ -96,6 +100,24 @@ a{color:inherit}
 .tableau td{padding:11px 12px;border-bottom:1px solid #201B17}
 .tableau tr:last-child td{border-bottom:none}
 .tableau .cat{font-weight:600;color:var(--or)}
+
+/* ---- Planning des entraînements (grille catégories × jours, façon app Dimanche) ---- */
+.planning{width:100%;border-collapse:separate;border-spacing:5px;table-layout:fixed;min-width:680px}
+.planning thead th{font-family:'Anton',Impact,sans-serif;font-size:13px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--or);padding:8px 4px;text-align:center}
+.planning thead th:first-child{width:96px}
+.planning .pcat{vertical-align:middle;text-align:center;padding:6px 4px}
+.planning .pcat span{display:inline-block;background:var(--rouge);color:#fff;border-radius:8px;
+  padding:6px 10px;font-family:'Anton',Impact,sans-serif;font-size:12.5px;letter-spacing:.08em;
+  text-transform:uppercase;line-height:1.2}
+.planning td{background:var(--nuit3);border:1px solid var(--brd);border-radius:10px;
+  padding:5px;vertical-align:top}
+.planning td.off{background:transparent;border:1px dashed #201B17}
+.seance{background:linear-gradient(160deg,rgba(216,35,42,.22),rgba(216,35,42,.08));
+  border:1px solid rgba(216,35,42,.4);border-radius:8px;padding:7px 8px;margin-bottom:5px;
+  display:flex;flex-direction:column;gap:2px;font-size:12px;color:var(--craie2);line-height:1.4}
+.seance:last-child{margin-bottom:0}
+.seance b{font-size:12.5px;color:var(--craie);font-weight:600;letter-spacing:.03em}
 
 /* ---- Divers ---- */
 .vide{color:var(--craie3);font-size:14px;padding:26px;text-align:center;border:1px dashed var(--brd);border-radius:12px}
