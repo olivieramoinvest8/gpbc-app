@@ -46,8 +46,8 @@ a{color:inherit}
 .bandeau .intro{margin-top:14px;max-width:64ch;color:var(--craie2);font-size:15.5px;line-height:1.65}
 
 /* ---- Filigrane (logo géant en bas à gauche, ne gêne pas la lecture) ---- */
-.filigrane{position:fixed;left:-210px;bottom:-210px;width:min(216vw,1680px);
-  opacity:.06;z-index:-1;pointer-events:none;user-select:none}
+.filigrane{position:fixed;left:-180px;bottom:-180px;width:min(180vw,1400px);
+  opacity:.04;z-index:-1;pointer-events:none;user-select:none}
 
 /* ---- Contenu ---- */
 .page{max-width:1060px;margin:0 auto;padding:28px 24px 70px}
